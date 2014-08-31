@@ -16,7 +16,7 @@ extern "C" {
 #include <lua/lauxlib.h>
 }
 
-void print_table(lua_State *L);
+static void print_table(lua_State *L);
 
 namespace amiffy3d {
 
