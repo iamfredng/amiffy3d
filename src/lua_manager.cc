@@ -16,8 +16,6 @@ extern "C" {
 #include <lua/lauxlib.h>
 }
 
-static void print_table(lua_State *L);
-
 namespace amiffy3d {
 
 LuaManager::LuaManager(void) {
@@ -64,12 +62,6 @@ void LuaManager::Dispose(void) {
 }
 
 void LuaManager::ExecuteLuaFunction(const std::string lua_function_name) {
-
-    lua_getglobal(lua_state_, "tt");
-    if (lua_istable(lua_state_, 1)) {
-        SDL_Log("11111111111111111sddd");
-        print_table(lua_state_);
-    }
     //lua_getglobal(L, "getKey");
     //lua_pushstring(L, "a1");
     //lua_pushstring(L, "a2");
@@ -81,56 +73,5 @@ void LuaManager::ExecuteLuaFunction(const std::string lua_function_name) {
     //std::cout << rvl << std::endl;
 }
 
-
 };
 
-
-// lua table 的非循环依赖遍历，这代码很简单，但有几点是需要注意的：
-// 1 lua_isstring()、lua_isnumber()之类的函数的判断依据是可否转型；
-// 2 lua_tostring()、lua_tonumber()之类的函数是有副作用的；
-// 3 lua_next() 需要用到的key是类型敏感的；
-// 4 print_table()不可遍历带循环引用的复杂表；
-static void print_table(lua_State* L) {
-    int l = lua_gettop(L);
-
-    printf("[table] %d\n", l);
-
-    lua_pushnil(L);
-
-    while (lua_next(L, -2)) {
-        switch (lua_type(L, -1)) {
-        case LUA_TNIL:
-            printf("[nil] nil\n");
-            break;
-        case LUA_TBOOLEAN:
-            printf("[boolean] %s\n", lua_toboolean(L, -1) ? "true" : "false");
-            break;
-        case LUA_TLIGHTUSERDATA:
-            printf("[lightuserdata] 0x%x\n", lua_topointer(L, -1));
-            break;
-        case LUA_TNUMBER:
-            printf("[number] %f\n", lua_tonumber(L, -1));
-            break;
-        case LUA_TSTRING:
-            printf("[string] %s\n", lua_tostring(L, -1));
-            break;
-        case LUA_TTABLE:
-            print_table(L);
-            break;
-        case LUA_TFUNCTION:
-            printf("[function] 0x%x\n", lua_topointer(L, -1));
-            break;
-        case LUA_TUSERDATA:
-            printf("userdata] 0x%x\n", lua_topointer(L, -1));
-            break;
-        case LUA_TTHREAD:
-            printf("[thread] 0x%x\n", lua_topointer(L, -1));
-            break;
-        default:
-            assert(0);
-        }
-        lua_pop(L, 1);
-    }
-
-    assert(lua_gettop(L) == l);
-}

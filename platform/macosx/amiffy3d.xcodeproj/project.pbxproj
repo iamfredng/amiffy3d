@@ -11,17 +11,19 @@
 		B6CF2E2219B38F8600BA5DBA /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B6CF2E2119B38F8600BA5DBA /* OpenGL.framework */; };
 		B6FCE96A19B3A10000FBBE36 /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B6FCE96919B3A10000FBBE36 /* SDL2.framework */; };
 		B6FCE97019B3ACF500FBBE36 /* lua_manager.cc in Sources */ = {isa = PBXBuildFile; fileRef = B6FCE96F19B3ACF500FBBE36 /* lua_manager.cc */; };
+		B6FCE97419B3BFC700FBBE36 /* some.lua in CopyFiles */ = {isa = PBXBuildFile; fileRef = B6FCE97319B3BFC000FBBE36 /* some.lua */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		B6CF2E0419B388ED00BA5DBA /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
+			buildActionMask = 12;
+			dstPath = scripts;
+			dstSubfolderSpec = 7;
 			files = (
+				B6FCE97419B3BFC700FBBE36 /* some.lua in CopyFiles */,
 			);
-			runOnlyForDeploymentPostprocessing = 1;
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
@@ -31,6 +33,7 @@
 		B6CF2E2119B38F8600BA5DBA /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		B6FCE96919B3A10000FBBE36 /* SDL2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2.framework; path = ../../3rd/lib/macosx/SDL2.framework; sourceTree = "<group>"; };
 		B6FCE96F19B3ACF500FBBE36 /* lua_manager.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lua_manager.cc; path = ../../src/lua_manager.cc; sourceTree = "<group>"; };
+		B6FCE97319B3BFC000FBBE36 /* some.lua */ = {isa = PBXFileReference; lastKnownFileType = text; path = some.lua; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -49,6 +52,7 @@
 		B6CF2DFD19B388ED00BA5DBA = {
 			isa = PBXGroup;
 			children = (
+				B6FCE97219B3BFC000FBBE36 /* lua */,
 				B6FCE96919B3A10000FBBE36 /* SDL2.framework */,
 				B6CF2E2119B38F8600BA5DBA /* OpenGL.framework */,
 				B6CF2E1319B3896F00BA5DBA /* inc */,
@@ -79,6 +83,15 @@
 			children = (
 			);
 			name = inc;
+			sourceTree = "<group>";
+		};
+		B6FCE97219B3BFC000FBBE36 /* lua */ = {
+			isa = PBXGroup;
+			children = (
+				B6FCE97319B3BFC000FBBE36 /* some.lua */,
+			);
+			name = lua;
+			path = ../../lua;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
