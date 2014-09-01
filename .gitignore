@@ -1,1 +1,7 @@
 platform/macosx/Build/
+platform/android/SDLActivity/jni/SDL
+platform/android/SDLActivity/libs
+platform/android/SDLActivity/obj
+platform/android/SDLActivity/gen
+platform/android/SDLActivity/bin
+platform/android/.metadata
