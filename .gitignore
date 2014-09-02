@@ -1,7 +1,8 @@
 platform/macosx/Build/
-platform/android/SDLActivity/jni/SDL
-platform/android/SDLActivity/libs
-platform/android/SDLActivity/obj
-platform/android/SDLActivity/gen
-platform/android/SDLActivity/bin
+platform/android/amiffy3d/jni/SDL
+platform/android/amiffy3d/libs
+platform/android/amiffy3d/obj
+platform/android/amiffy3d/gen
+platform/android/amiffy3d/bin
 platform/android/.metadata
+**/*.o
