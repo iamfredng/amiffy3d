@@ -13,8 +13,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := main
 
 SDL_PATH := ../SDL
-
-
+AMIFFY3D_PATH := $(LOCAL_PATH)/../../../../../
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(SDL_PATH)/include \
 	$(AMIFFY3D_PATH)/include \
@@ -28,7 +27,7 @@ LOCAL_SRC_FILES := $(SDL_PATH)/src/main/android/SDL_android_main.c \
 LOCAL_SHARED_LIBRARIES := SDL2
 LOCAL_STATIC_LIBRARIES := lua
 
-LOCAL_LDLIBS := -lGLESv1_CM -lGLESv2 -llog
+LOCAL_LDLIBS := -lGLESv1_CM -lGLESv2 -llog -lEGL
 LOCAL_CPPFLAGS := -std=c++11
 
 include $(BUILD_SHARED_LIBRARY)
