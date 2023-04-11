@@ -3,28 +3,57 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
+#define NK_INCLUDE_FIXED_TYPES
+#define NK_INCLUDE_STANDARD_IO
+#define NK_INCLUDE_STANDARD_VARARGS
+#define NK_INCLUDE_DEFAULT_ALLOCATOR
+#define NK_INCLUDE_VERTEX_BUFFER_OUTPUT
+#define NK_INCLUDE_FONT_BAKING
+#define NK_INCLUDE_DEFAULT_FONT
+#define NK_IMPLEMENTATION
+#define NK_GLFW_GL3_IMPLEMENTATION
+#define NK_KEYSTATE_BASED_INPUT
+#include <nuklear/nuklear.h>
+#include <nuklear/nuklear_glfw_gl3.h>
+
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-// #include <wchar.h>
 
 #ifdef _WIN32
 #    include <Windows.h>
 #endif
 
-// int main( int argc, char** argv )
-//{
-//     printf( "Amiffy3D text" );
-//     return 0;
-// }
+#define MAX_VERTEX_BUFFER 512 * 1024
+#define MAX_ELEMENT_BUFFER 128 * 1024
 
-void error_callback( int error, const char* desc )
-{
-    fprintf( stderr, "ERROR: %s\n", desc );
-}
+static bool quick = false;
 
 void chinese_fix()
 {
     SetConsoleOutputCP( 65001 );
+}
+
+void setup_nk_font( struct nk_glfw* glfw, struct nk_context* nk )
+{
+    struct nk_font_atlas* atlas;
+    nk_glfw3_font_stash_begin( glfw, &atlas );
+    struct nk_font_config conf = nk_font_config( 96 );
+    conf.range                 = nk_font_chinese_glyph_ranges();
+    conf.oversample_h          = 2;
+    conf.oversample_v          = 2;
+    conf.pixel_snap            = 0;
+    struct nk_font* f          = nk_font_atlas_add_from_file( atlas, "../../dyh.ttf", 18, &conf );
+    nk_glfw3_font_stash_end( glfw );
+    nk_style_set_font( nk, &f->handle );
+}
+
+void ExampleGLFWkeyfun( GLFWwindow* window, int key, int scancode, int action, int mods )
+{
+    printf_s( "key: %d scancode: %d action: %d mods: %d\n", key, scancode, action, mods );
+    if ( key == 81 && action == 0 ) {
+        quick = TRUE;
+    }
 }
 
 int main( int argc, char** argv )
@@ -33,19 +62,15 @@ int main( int argc, char** argv )
     chinese_fix();
 #endif
 
-    int  last_xpos = INT_MIN, last_ypos = INT_MIN;
-    int  last_width = INT_MIN, last_height = INT_MIN;
-    char width_buffer [12] = "", height_buffer [12] = "";
-    char xpos_buffer [12] = "", ypos_buffer [12] = "";
-
     if ( !glfwInit() ) {
-        printf( "初始化窗体失败\n" );
+        printf_s( "初始化窗体失败\n" );
         exit( EXIT_FAILURE );
     }
 
+    glfwWindowHint( GLFW_CONTEXT_DEBUG, GLFW_TRUE );
     glfwWindowHint( GLFW_SCALE_TO_MONITOR, GLFW_TRUE );
     glfwWindowHint( GLFW_WIN32_KEYBOARD_MENU, GLFW_TRUE );
-    glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 2 );
+    glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 3 );
     glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 1 );
 
     GLFWwindow* window = glfwCreateWindow( 600, 600, "Window 特性", NULL, NULL );
@@ -56,34 +81,51 @@ int main( int argc, char** argv )
         exit( EXIT_FAILURE );
     }
 
-    printf_s( "创建窗体完成\n" );
-
     glfwMakeContextCurrent( window );
     gladLoadGL( glfwGetProcAddress );
-    glfwSwapInterval( 0 );
+    glfwSwapInterval( 1 );
 
-    glfwGetError( NULL );
-    glfwGetWindowPos( window, &last_xpos, &last_ypos );
-    sprintf( xpos_buffer, "%i", last_xpos );
-    sprintf( ypos_buffer, "%i", last_ypos );
+    // glfwGetError( NULL );
 
-    glfwGetWindowSize( window, &last_width, &last_height );
-    sprintf( width_buffer, "%i", last_width );
-    sprintf( height_buffer, "%i", last_height );
+    struct nk_glfw     glfw = { 0 };
+    struct nk_context* nk   = nk_glfw3_init( &glfw, window, NK_GLFW3_INSTALL_CALLBACKS );
 
-    while ( !glfwWindowShouldClose( window ) ) {
+    setup_nk_font( &glfw, nk );
+    // double lst = 0;
+
+    glfwSetKeyCallback( window, ExampleGLFWkeyfun );
+    while ( !quick && !glfwWindowShouldClose( window ) ) {
         int width, height;
 
         glfwGetWindowSize( window, &width, &height );
 
-        printf_s( "Window Size: %d %d\n", width, height );
+        struct nk_rect area = nk_rect( 0.f, 0.f, (float) width, (float) height );
+        nk_window_set_bounds( nk, "窗体", area );
+        nk_glfw3_new_frame( &glfw );
 
-        glfwSwapBuffers( window );
+        if ( nk_begin( nk, "主窗体", area, 1 ) ) {
+            nk_layout_row_dynamic( nk, 30, 5 );
+
+            if ( nk_button_label( nk, "最大化" ) ) glfwMaximizeWindow( window );
+            if ( nk_button_label( nk, "最小化" ) ) glfwIconifyWindow( window );
+            if ( nk_button_label( nk, "Restore" ) ) glfwRestoreWindow( window );
+            if ( nk_button_label( nk, "关闭" ) ) quick = true;
+        }
+        nk_end( nk );
+
+        // double time = glfwGetTime();
+        // printf_s( "Time: %f\n", time - lst );
+        // lst = time;
 
         glClear( GL_COLOR_BUFFER_BIT );
-        glClearColor( 1.0f, 0.0f, .0f, .0f );
-        glfwWaitEvents();
+        nk_glfw3_render( &glfw, NK_ANTI_ALIASING_ON, MAX_VERTEX_BUFFER, MAX_ELEMENT_BUFFER );
+        glfwSwapBuffers( window );
+        glClearColor( .0f, 1.0f, 1.0f, .0f );
+        // glfwWaitEventsTimeout( 0.016f );
+        // glfwWaitEvents();
+        glfwPollEvents();
     }
+    nk_glfw3_shutdown( &glfw );
     glfwTerminate();
     printf_s( "正常离开\n" );
     exit( EXIT_SUCCESS );
