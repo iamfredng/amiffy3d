@@ -17,8 +17,11 @@ if (WIN32)
     set(ICON glfw.rc)
 endif()
 
-set(AMIFFY_SOURCE main.c
+set(AMIFFY_SOURCE
     amiffy.h
+    main.c
+    lua_bind.h
+    lua_bind.c
 )
 
 # add_executable(AMIFFY3D ${AMIFFY_SOURCE} ${GLAD_GL} ${ICON})

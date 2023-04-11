@@ -18,6 +18,7 @@
 
 #include <log.h>
 
+#include <lua/lapi.h>
 #include <lua/lauxlib.h>
 #include <lua/lua.h>
 #include <lua/lualib.h>
@@ -31,46 +32,12 @@
 #endif
 
 #include "amiffy.h"
+#include "lua_bind.h"
 
-const static int HIGHSPEED_EVENT = 1;
-
-static bool       quick = false;
-static lua_State* lua_state;
-static FILE*      log_fd;
-
-int call_lua( const char* func_name, int a, int b )
-{
-    // Push the add function on the top of the lua stack
-    lua_getglobal( lua_state, "add" );
-    // Push the first argument on the top of the lua stack
-    lua_pushnumber( lua_state, a );
-    // Push the second argument on the top of the lua stack
-    lua_pushnumber( lua_state, b );
-    // Call the function with 2 arguments, returning 1 result
-    lua_call( lua_state, 2, 1 );
-    // Get the result
-    int sum = (int) lua_tointeger( lua_state, -1 );
-    lua_pop( lua_state, 1 );
-    return sum;
-}
-
-static int big_a( lua_State* L )
-{
-    int a = lua_tonumber( L, 1 );
-    log_debug( "a: %d", a );
-    int b = lua_tonumber( L, 2 );
-    log_debug( "b: %d", b );
-    int c = a + b;
-    lua_pushnumber( L, c );
-    return 1;
-}
-
-static int c_log_info( lua_State* L )
-{
-    const char* str = lua_tostring( L, 1 );
-    log_info( "%s", str );
-    return 0;
-}
+static bool        quick = false;
+static lua_State*  lua_state;
+static FILE*       log_fd;
+struct nk_context* nk;
 
 void setup_lua()
 {
@@ -78,9 +45,7 @@ void setup_lua()
 
     luaL_openlibs( lua_state );
     luaopen_debug( lua_state );
-
-    lua_register( lua_state, "big_a", big_a );
-    lua_register( lua_state, "c_log_info", c_log_info );
+    bind_amiffy_func( lua_state );
 
     int rvl = luaL_dofile( lua_state, "lua/init.lua" );
     if ( rvl != 0 ) {
@@ -112,14 +77,6 @@ void setup_nk_font( struct nk_glfw* glfw, struct nk_context* nk )
 void glfwKeyCallback( GLFWwindow* window, int key, int scancode, int action, int mods )
 {
     log_debug( "key: %d scancode: %d action: %d mods: %d", key, scancode, action, mods );
-    if ( key == 81 && action == 0 ) {
-        quick = TRUE;
-    }
-
-    if ( key == 65 && action == 0 ) {
-        int rsl = call_lua( "add", 10, 20 );
-        log_info( "lua function result: %d", rsl );
-    }
 }
 
 void setup_log()
@@ -129,6 +86,16 @@ void setup_log()
 
     log_fd = fopen( "./log_debug.txt", "ab" );
     log_add_fp( log_fd, LOG_DEBUG );
+}
+
+void lua_update_call()
+{
+    lua_getglobal( lua_state, "update" );
+    int rvl = lua_pcall( lua_state, 0, 0, 0 );
+    if ( rvl != 0 ) {
+        log_error( "lua_update_call 失败, %d", rvl );
+        log_error( "%s", lua_tostring( lua_state, -1 ) );
+    }
 }
 
 int main( int argc, char** argv )
@@ -161,14 +128,13 @@ int main( int argc, char** argv )
     glfwSwapInterval( 1 );
     log_info( "初始化窗体完成" );
 
-    struct nk_glfw     glfw = { 0 };
-    struct nk_context* nk   = nk_glfw3_init( &glfw, window, NK_GLFW3_INSTALL_CALLBACKS );
     log_info( "初始化GUI系统" );
-
+    struct nk_glfw glfw = { 0 };
+    nk                  = nk_glfw3_init( &glfw, window, NK_GLFW3_INSTALL_CALLBACKS );
     setup_nk_font( &glfw, nk );
 
-    log_info( "绑定按键回调" );
     glfwSetKeyCallback( window, glfwKeyCallback );
+    log_info( "绑定按键回调" );
 
     while ( !quick && !glfwWindowShouldClose( window ) ) {
         int width, height;
@@ -179,12 +145,12 @@ int main( int argc, char** argv )
         nk_glfw3_new_frame( &glfw );
 
         if ( nk_begin( nk, "主窗体", area, 1 ) ) {
-            nk_layout_row_dynamic( nk, 30, 5 );
+            lua_update_call();
 
-            if ( nk_button_label( nk, "最大化" ) ) glfwMaximizeWindow( window );
-            if ( nk_button_label( nk, "最小化" ) ) glfwIconifyWindow( window );
-            if ( nk_button_label( nk, "Restore" ) ) glfwRestoreWindow( window );
-            if ( nk_button_label( nk, "关闭" ) ) quick = true;
+            // if ( nk_button_label( nk, "最大化" ) ) glfwMaximizeWindow( window );
+            // if ( nk_button_label( nk, "最小化" ) ) glfwIconifyWindow( window );
+            // if ( nk_button_label( nk, "Restore" ) ) glfwRestoreWindow( window );
+            // if ( nk_button_label( nk, "关闭" ) ) quick = true;
         }
         nk_end( nk );
 
@@ -192,18 +158,24 @@ int main( int argc, char** argv )
         nk_glfw3_render( &glfw, NK_ANTI_ALIASING_ON, MAX_VERTEX_BUFFER, MAX_ELEMENT_BUFFER );
         glfwSwapBuffers( window );
         glClearColor( .0f, 1.0f, 1.0f, .0f );
-        if ( HIGHSPEED_EVENT == 0 ) {
-            glfwWaitEvents();
-        }
-        else if ( HIGHSPEED_EVENT == 1 ) {
-            glfwWaitEventsTimeout( 0.016f );
-        }
-        else {
-            glfwPollEvents();
-        }
+
+        nk_clear( nk );
+
+#ifdef HIGHSPEED_EVENT_FLAG
+        glfwPollEvents();
+
+#endif
+
+#ifdef LOWSPEED_EVENT_FLAG
+        glfwWaitEvents();
+        // glfwWaitEventsTimeout( 0.016f );
+#endif
     }
 
     nk_glfw3_shutdown( &glfw );
+
+    nk_free( nk );
+
     glfwTerminate();
     log_info( "销毁glfw" );
 
