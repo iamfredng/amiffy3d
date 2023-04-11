@@ -48,6 +48,6 @@ set(GLFW_VERSION 3.4.0)
 add_subdirectory(3rd/glfw3)
 add_subdirectory(3rd/logc)
 add_subdirectory(3rd/lua)
-add_subdirectory(src)
+add_subdirectory(amiffy)
 
 message("CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}")

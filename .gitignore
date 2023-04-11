@@ -1,5 +1,6 @@
 build/
 .cache/
+fonts/
 amiffy3d.exe
 amiffy3d.pdb
 log_debug.txt

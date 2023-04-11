@@ -30,21 +30,13 @@
 #    include <Windows.h>
 #endif
 
-#define MAX_VERTEX_BUFFER 512 * 1024
-#define MAX_ELEMENT_BUFFER 128 * 1024
+#include "amiffy.h"
+
+const static int HIGHSPEED_EVENT = 1;
 
 static bool       quick = false;
 static lua_State* lua_state;
 static FILE*      log_fd;
-
-void call_lua_uuuu( const char* func_name, const char* msg )
-{
-    lua_getglobal( lua_state, "uuuu" );
-
-    lua_pushstring( lua_state, msg );
-
-    lua_call( lua_state, 1, 0 );
-}
 
 int call_lua( const char* func_name, int a, int b )
 {
@@ -80,28 +72,6 @@ static int c_log_info( lua_State* L )
     return 0;
 }
 
-static int openf( lua_State* L )
-{
-    char const* const modname = lua_tostring( L, 1 );
-    log_info( "modname %s", modname );
-    return 1;
-}
-
-// int setLuaPath( lua_State* L, const char* path )
-// {
-//     lua_getglobal( L, "package" );
-//     lua_getfield( L, -1, "path" );   // get field "path" from table at top of stack (-1)
-//     std::string cur_path = lua_tostring( L, -1 );   // grab path string from top of stack
-//     cur_path.append( ";" );                         // do your path magic here
-//     cur_path.append( path );
-//     lua_pop( L, 1 );   // get rid of the string on the stack we just pushed on line 5
-//     lua_pushstring( L, cur_path.c_str() );   // push the new one
-//     lua_setfield(
-//         L, -2, "path" );   // set the field "path" in table at -2 with value at top of stack
-//     lua_pop( L, 1 );       // get rid of package table from top of stack
-//     return 0;              // all done!
-// }
-
 void setup_lua()
 {
     lua_state = luaL_newstate();
@@ -127,12 +97,14 @@ void setup_nk_font( struct nk_glfw* glfw, struct nk_context* nk )
     log_info( "设置字体" );
     struct nk_font_atlas* atlas;
     nk_glfw3_font_stash_begin( glfw, &atlas );
-    struct nk_font_config conf = nk_font_config( 96 );
+
+    struct nk_font_config conf = nk_font_config( FONT_SIZE );
     conf.range                 = nk_font_chinese_glyph_ranges();
     conf.oversample_h          = 2;
     conf.oversample_v          = 2;
     conf.pixel_snap            = 0;
-    struct nk_font* f          = nk_font_atlas_add_from_file( atlas, "dyh.ttf", 18, &conf );
+    struct nk_font* f          = nk_font_atlas_add_from_file( atlas, FONT_NAME, FONT_SIZE, &conf );
+
     nk_glfw3_font_stash_end( glfw );
     nk_style_set_font( nk, &f->handle );
 }
@@ -142,10 +114,6 @@ void glfwKeyCallback( GLFWwindow* window, int key, int scancode, int action, int
     log_debug( "key: %d scancode: %d action: %d mods: %d", key, scancode, action, mods );
     if ( key == 81 && action == 0 ) {
         quick = TRUE;
-    }
-
-    if ( key == 83 && action == 0 ) {
-        call_lua_uuuu( "uuuu", "中文传递参数 c -> lua" );
     }
 
     if ( key == 65 && action == 0 ) {
@@ -224,9 +192,15 @@ int main( int argc, char** argv )
         nk_glfw3_render( &glfw, NK_ANTI_ALIASING_ON, MAX_VERTEX_BUFFER, MAX_ELEMENT_BUFFER );
         glfwSwapBuffers( window );
         glClearColor( .0f, 1.0f, 1.0f, .0f );
-        // glfwWaitEventsTimeout( 0.016f );
-        // glfwWaitEvents();
-        glfwPollEvents();
+        if ( HIGHSPEED_EVENT == 0 ) {
+            glfwWaitEvents();
+        }
+        else if ( HIGHSPEED_EVENT == 1 ) {
+            glfwWaitEventsTimeout( 0.016f );
+        }
+        else {
+            glfwPollEvents();
+        }
     }
 
     nk_glfw3_shutdown( &glfw );
