@@ -34,7 +34,7 @@ set_target_properties(AMIFFY3D PROPERTIES
 
 if (MSVC)
     # Tell MSVC to use main instead of WinMain
-    set_target_properties(amiffy3d PROPERTIES
+    set_target_properties(AMIFFY3D PROPERTIES
                           LINK_FLAGS "/ENTRY:mainCRTStartup")
 elseif (CMAKE_C_SIMULATE_ID STREQUAL "MSVC")
     # Tell Clang using MS CRT to use main instead of WinMain
