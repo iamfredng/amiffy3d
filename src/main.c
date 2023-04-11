@@ -18,6 +18,10 @@
 
 #include <log.h>
 
+#include <lua/lauxlib.h>
+#include <lua/lua.h>
+#include <lua/lualib.h>
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,11 +33,93 @@
 #define MAX_VERTEX_BUFFER 512 * 1024
 #define MAX_ELEMENT_BUFFER 128 * 1024
 
-static bool quick = false;
+static bool       quick = false;
+static lua_State* lua_state;
+static FILE*      log_fd;
 
-void chinese_fix()
+void call_lua_uuuu( const char* func_name, const char* msg )
 {
-    SetConsoleOutputCP( 65001 );
+    lua_getglobal( lua_state, "uuuu" );
+
+    lua_pushstring( lua_state, msg );
+
+    lua_call( lua_state, 1, 0 );
+}
+
+int call_lua( const char* func_name, int a, int b )
+{
+    // Push the add function on the top of the lua stack
+    lua_getglobal( lua_state, "add" );
+    // Push the first argument on the top of the lua stack
+    lua_pushnumber( lua_state, a );
+    // Push the second argument on the top of the lua stack
+    lua_pushnumber( lua_state, b );
+    // Call the function with 2 arguments, returning 1 result
+    lua_call( lua_state, 2, 1 );
+    // Get the result
+    int sum = (int) lua_tointeger( lua_state, -1 );
+    lua_pop( lua_state, 1 );
+    return sum;
+}
+
+static int big_a( lua_State* L )
+{
+    int a = lua_tonumber( L, 1 );
+    log_debug( "a: %d", a );
+    int b = lua_tonumber( L, 2 );
+    log_debug( "b: %d", b );
+    int c = a + b;
+    lua_pushnumber( L, c );
+    return 1;
+}
+
+static int c_log_info( lua_State* L )
+{
+    const char* str = lua_tostring( L, 1 );
+    log_info( "%s", str );
+    return 0;
+}
+
+static int openf( lua_State* L )
+{
+    char const* const modname = lua_tostring( L, 1 );
+    log_info( "modname %s", modname );
+    return 1;
+}
+
+// int setLuaPath( lua_State* L, const char* path )
+// {
+//     lua_getglobal( L, "package" );
+//     lua_getfield( L, -1, "path" );   // get field "path" from table at top of stack (-1)
+//     std::string cur_path = lua_tostring( L, -1 );   // grab path string from top of stack
+//     cur_path.append( ";" );                         // do your path magic here
+//     cur_path.append( path );
+//     lua_pop( L, 1 );   // get rid of the string on the stack we just pushed on line 5
+//     lua_pushstring( L, cur_path.c_str() );   // push the new one
+//     lua_setfield(
+//         L, -2, "path" );   // set the field "path" in table at -2 with value at top of stack
+//     lua_pop( L, 1 );       // get rid of package table from top of stack
+//     return 0;              // all done!
+// }
+
+void setup_lua()
+{
+    lua_state = luaL_newstate();
+
+    luaL_openlibs( lua_state );
+    luaopen_debug( lua_state );
+
+    lua_register( lua_state, "big_a", big_a );
+    lua_register( lua_state, "c_log_info", c_log_info );
+
+    int rvl = luaL_dofile( lua_state, "lua/init.lua" );
+    if ( rvl != 0 ) {
+        log_error( "dofile 失败, %d", rvl );
+        log_error( "%s", lua_tostring( lua_state, -1 ) );
+        exit( EXIT_FAILURE );
+    }
+
+    log_info( "lua环境初始化完毕" );
 }
 
 void setup_nk_font( struct nk_glfw* glfw, struct nk_context* nk )
@@ -46,21 +132,29 @@ void setup_nk_font( struct nk_glfw* glfw, struct nk_context* nk )
     conf.oversample_h          = 2;
     conf.oversample_v          = 2;
     conf.pixel_snap            = 0;
-    struct nk_font* f          = nk_font_atlas_add_from_file( atlas, "../../dyh.ttf", 18, &conf );
+    struct nk_font* f          = nk_font_atlas_add_from_file( atlas, "dyh.ttf", 18, &conf );
     nk_glfw3_font_stash_end( glfw );
     nk_style_set_font( nk, &f->handle );
 }
 
-void ExampleGLFWkeyfun( GLFWwindow* window, int key, int scancode, int action, int mods )
+void glfwKeyCallback( GLFWwindow* window, int key, int scancode, int action, int mods )
 {
-    printf_s( "key: %d scancode: %d action: %d mods: %d\n", key, scancode, action, mods );
+    log_debug( "key: %d scancode: %d action: %d mods: %d", key, scancode, action, mods );
     if ( key == 81 && action == 0 ) {
         quick = TRUE;
     }
+
+    if ( key == 83 && action == 0 ) {
+        call_lua_uuuu( "uuuu", "中文传递参数 c -> lua" );
+    }
+
+    if ( key == 65 && action == 0 ) {
+        int rsl = call_lua( "add", 10, 20 );
+        log_info( "lua function result: %d", rsl );
+    }
 }
 
-static FILE* log_fd;
-void         setup_log()
+void setup_log()
 {
     log_set_level( 0 );
     log_set_quiet( 0 );
@@ -73,10 +167,7 @@ int main( int argc, char** argv )
 {
     setup_log();
 
-#ifdef _WIN32
-    log_info( "修复中文乱码" );
-    chinese_fix();
-#endif
+    setup_lua();
 
     if ( !glfwInit() ) {
         log_error( "初始化窗体失败\n" );
@@ -109,7 +200,7 @@ int main( int argc, char** argv )
     setup_nk_font( &glfw, nk );
 
     log_info( "绑定按键回调" );
-    glfwSetKeyCallback( window, ExampleGLFWkeyfun );
+    glfwSetKeyCallback( window, glfwKeyCallback );
 
     while ( !quick && !glfwWindowShouldClose( window ) ) {
         int width, height;
@@ -129,10 +220,6 @@ int main( int argc, char** argv )
         }
         nk_end( nk );
 
-        // double time = glfwGetTime();
-        // printf_s( "Time: %f\n", time - lst );
-        // lst = time;
-
         glClear( GL_COLOR_BUFFER_BIT );
         nk_glfw3_render( &glfw, NK_ANTI_ALIASING_ON, MAX_VERTEX_BUFFER, MAX_ELEMENT_BUFFER );
         glfwSwapBuffers( window );
@@ -141,8 +228,14 @@ int main( int argc, char** argv )
         // glfwWaitEvents();
         glfwPollEvents();
     }
+
     nk_glfw3_shutdown( &glfw );
     glfwTerminate();
+    log_info( "销毁glfw" );
+
+    lua_close( lua_state );
+    log_info( "销毁lua虚拟机" );
+
     log_info( "正常离开\n" );
 
     fclose( log_fd );

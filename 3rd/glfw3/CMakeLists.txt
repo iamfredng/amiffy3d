@@ -7,6 +7,10 @@ add_library(glfw ${GLFW_LIBRARY_TYPE}
     src/null_init.c src/null_monitor.c src/null_window.c src/null_joystick.c
 )
 
+if (MSVC OR CMAKE_C_SIMULATE_ID STREQUAL "MSVC")
+    target_compile_definitions(glfw PRIVATE _CRT_SECURE_NO_WARNINGS)
+endif()
+
 if (WIN32)
     target_sources(glfw PRIVATE
         src/win32_time.h src/win32_thread.h src/win32_module.c src/win32_time.c src/win32_thread.c)

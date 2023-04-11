@@ -1,9 +1,11 @@
 link_libraries(glfw)
 link_libraries(logc)
+link_libraries(lua)
 
 include_directories("${AMIFFY3D_SOURCE_DIR}/3rd/glfw3/include")
 include_directories("${AMIFFY3D_SOURCE_DIR}/3rd/nuklear/include")
 include_directories("${AMIFFY3D_SOURCE_DIR}/3rd/logc/include")
+include_directories("${AMIFFY3D_SOURCE_DIR}/3rd/lua/include")
 
 if (MSVC OR CMAKE_C_SIMULATE_ID STREQUAL "MSVC")
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -15,11 +17,12 @@ if (WIN32)
     set(ICON glfw.rc)
 endif()
 
-add_executable(amiffy3d main.c ${GLAD_GL} ${ICON})
+# add_executable(amiffy3d main.c ${GLAD_GL} ${ICON})
 
-# add_executable(amiffy3d WIN32 MACOSX_BUNDLE main.c ${GLAD_GL} ${ICON})
+add_executable(amiffy3d WIN32 MACOSX_BUNDLE main.c ${GLAD_GL} ${ICON})
 
 set_target_properties(amiffy3d PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/../"
     C_STANDARD 99)
 
 if (MSVC)

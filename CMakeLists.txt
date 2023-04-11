@@ -2,13 +2,15 @@ cmake_minimum_required(VERSION 3.4...3.26 FATAL_ERROR)
 
 project(AMIFFY3D VERSION 0.1.1 LANGUAGES C)
 
-if (POLICY CMP65001)
-    cmake_policy(SET CMP65001 NEW)
-endif()
+# if (POLICY CMP65001)
+#     cmake_policy(SET CMP65001 NEW)
+# endif()
 
-if (POLICY CMP0069)
-    cmake_policy(SET CMP0069 NEW)
-endif()
+# if (POLICY CMP0069)
+#     cmake_policy(SET CMP0069 NEW)
+# endif()
+
+# set(CMAKE_BUILD_TYPE Release)
 
 include(CMakeDependentOption)
 
@@ -45,4 +47,7 @@ set(GLFW_VERSION 3.4.0)
 
 add_subdirectory(3rd/glfw3)
 add_subdirectory(3rd/logc)
+add_subdirectory(3rd/lua)
 add_subdirectory(src)
+
+message("CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}")
