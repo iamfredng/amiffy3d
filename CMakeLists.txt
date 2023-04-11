@@ -44,5 +44,5 @@ set(GLFW_VERSION 3.4.0)
 #                                  COMPATIBILITY SameMajorVersion)
 
 add_subdirectory(3rd/glfw3)
-
+add_subdirectory(3rd/logc)
 add_subdirectory(src)

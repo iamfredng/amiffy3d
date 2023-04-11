@@ -1,6 +1,9 @@
 link_libraries(glfw)
+link_libraries(logc)
 
 include_directories("${AMIFFY3D_SOURCE_DIR}/3rd/glfw3/include")
+include_directories("${AMIFFY3D_SOURCE_DIR}/3rd/nuklear/include")
+include_directories("${AMIFFY3D_SOURCE_DIR}/3rd/logc/include")
 
 if (MSVC OR CMAKE_C_SIMULATE_ID STREQUAL "MSVC")
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)

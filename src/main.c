@@ -16,6 +16,8 @@
 #include <nuklear/nuklear.h>
 #include <nuklear/nuklear_glfw_gl3.h>
 
+#include <log.h>
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,6 +38,7 @@ void chinese_fix()
 
 void setup_nk_font( struct nk_glfw* glfw, struct nk_context* nk )
 {
+    log_info( "设置字体" );
     struct nk_font_atlas* atlas;
     nk_glfw3_font_stash_begin( glfw, &atlas );
     struct nk_font_config conf = nk_font_config( 96 );
@@ -56,14 +59,27 @@ void ExampleGLFWkeyfun( GLFWwindow* window, int key, int scancode, int action, i
     }
 }
 
+static FILE* log_fd;
+void         setup_log()
+{
+    log_set_level( 0 );
+    log_set_quiet( 0 );
+
+    log_fd = fopen( "./log_debug.txt", "ab" );
+    log_add_fp( log_fd, LOG_DEBUG );
+}
+
 int main( int argc, char** argv )
 {
+    setup_log();
+
 #ifdef _WIN32
+    log_info( "修复中文乱码" );
     chinese_fix();
 #endif
 
     if ( !glfwInit() ) {
-        printf_s( "初始化窗体失败\n" );
+        log_error( "初始化窗体失败\n" );
         exit( EXIT_FAILURE );
     }
 
@@ -76,7 +92,7 @@ int main( int argc, char** argv )
     GLFWwindow* window = glfwCreateWindow( 600, 600, "Window 特性", NULL, NULL );
 
     if ( !window ) {
-        printf_s( "创建窗体失败\n" );
+        log_error( "创建窗体失败\n" );
         glfwTerminate();
         exit( EXIT_FAILURE );
     }
@@ -84,19 +100,19 @@ int main( int argc, char** argv )
     glfwMakeContextCurrent( window );
     gladLoadGL( glfwGetProcAddress );
     glfwSwapInterval( 1 );
-
-    // glfwGetError( NULL );
+    log_info( "初始化窗体完成" );
 
     struct nk_glfw     glfw = { 0 };
     struct nk_context* nk   = nk_glfw3_init( &glfw, window, NK_GLFW3_INSTALL_CALLBACKS );
+    log_info( "初始化GUI系统" );
 
     setup_nk_font( &glfw, nk );
-    // double lst = 0;
 
+    log_info( "绑定按键回调" );
     glfwSetKeyCallback( window, ExampleGLFWkeyfun );
+
     while ( !quick && !glfwWindowShouldClose( window ) ) {
         int width, height;
-
         glfwGetWindowSize( window, &width, &height );
 
         struct nk_rect area = nk_rect( 0.f, 0.f, (float) width, (float) height );
@@ -127,6 +143,8 @@ int main( int argc, char** argv )
     }
     nk_glfw3_shutdown( &glfw );
     glfwTerminate();
-    printf_s( "正常离开\n" );
+    log_info( "正常离开\n" );
+
+    fclose( log_fd );
     exit( EXIT_SUCCESS );
 }
