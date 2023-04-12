@@ -39,17 +39,18 @@ static lua_State*     lua_state;
 static FILE*          log_fd;
 struct nk_context*    nk;
 struct nk_font_atlas* atlas;
+struct nk_colorf      bg;
 
 void setup_lua()
 {
     lua_state = luaL_newstate();
-
     luaL_openlibs( lua_state );
     luaopen_debug( lua_state );
-    bind_amiffy_func( lua_state );
+
+    bind_amiffy_modules( lua_state );
 
     /// 嵌入一些简单的辅助函数, 方便不需要在init.lua中定义或额外写定义文件
-    int rvl = luaL_dostring( lua_state, "_G['NK_FLAG'] = function(inv) return 1 << inv end" );
+    int rvl = luaL_dostring( lua_state, "_G['NK_FLAG'] = function(inv) return 1 << inv end;" );
 
     rvl = luaL_dofile( lua_state, "lua/init.lua" );
     if ( rvl != 0 ) {
@@ -58,6 +59,13 @@ void setup_lua()
         exit( EXIT_FAILURE );
     }
 
+    lua_getglobal( lua_state, "init" );
+    rvl = lua_pcall( lua_state, 0, 0, 0 );
+    if ( rvl != 0 ) {
+        log_error( "init 失败, %d", rvl );
+        log_error( "%s", lua_tostring( lua_state, -1 ) );
+        exit( EXIT_FAILURE );
+    }
     log_info( "lua环境初始化完毕" );
 }
 
@@ -121,7 +129,6 @@ static void error_callback( int e, const char* d )
     printf( "Error %d: %s\n", e, d );
 }
 
-
 int main( int argc, char** argv )
 {
     setup_log();
@@ -141,10 +148,10 @@ int main( int argc, char** argv )
     glfwWindowHint( GLFW_SCALE_TO_MONITOR, GLFW_TRUE );
     glfwWindowHint( GLFW_WIN32_KEYBOARD_MENU, GLFW_TRUE );
     glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
-    //glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE );
-    //glfwWindowHint( GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE );
-    //glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
-    //glfwWindowHint( GLFW_DECORATED, GLFW_FALSE );
+    // glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE );
+    // glfwWindowHint( GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE );
+    // glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
+    // glfwWindowHint( GLFW_DECORATED, GLFW_FALSE );
 
     GLFWwindow* window = glfwCreateWindow( 600, 600, "Window", NULL, NULL );
     if ( !window ) {
@@ -170,12 +177,10 @@ int main( int argc, char** argv )
 
     glfwSetKeyCallback( window, glfwKeyCallback );
     log_info( "绑定按键回调" );
-    struct nk_colorf bg;
-    int              width, height;
-    bg.r = 0.10f, bg.g = 0.18f, bg.b = 0.24f, bg.a = 1.0f;
+
+    int width, height;
+
     while ( !quick && !glfwWindowShouldClose( window ) ) {
-
-
 
 #ifdef HIGHSPEED_EVENT_FLAG
         glfwPollEvents();
@@ -205,9 +210,10 @@ int main( int argc, char** argv )
             if ( nk_button_label( nk, "关闭" ) ) quick = true;
         }
         nk_end( nk );
-        glfwGetWindowSize( nk, &width, &height );
+
+        glfwGetWindowSize( window, &width, &height );
         glViewport( 0, 0, width, height );
-        glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
+        glClearColor( bg.r, bg.g, bg.b, bg.a );
         glClear( GL_COLOR_BUFFER_BIT );
 
         nk_glfw3_render( &glfw, NK_ANTI_ALIASING_ON, MAX_VERTEX_BUFFER, MAX_ELEMENT_BUFFER );

@@ -7,9 +7,10 @@
 #define FONT_NAME "./fonts/harmony.ttf"
 #define FONT_SIZE 16
 
- #define HIGHSPEED_EVENT_FLAG
-//#define LOWSPEED_EVENT_FLAG
+// #define HIGHSPEED_EVENT_FLAG
+#define LOWSPEED_EVENT_FLAG
 
 extern struct nk_context* nk;
+extern struct nk_colorf bg;
 
 #endif
