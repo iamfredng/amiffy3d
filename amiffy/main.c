@@ -148,6 +148,9 @@ int main( int argc, char** argv )
     glfwWindowHint( GLFW_SCALE_TO_MONITOR, GLFW_TRUE );
     glfwWindowHint( GLFW_WIN32_KEYBOARD_MENU, GLFW_TRUE );
     glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
+
+
+    // 透明无边框窗体, 最好配合全屏
     // glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE );
     // glfwWindowHint( GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE );
     // glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
@@ -195,11 +198,9 @@ int main( int argc, char** argv )
         glfwGetWindowSize( window, &width, &height );
 
         lua_update_call( width, height );
-        struct nk_rect area = nk_rect( 0.f, 0.f, 280, 220 );
-        nk_window_set_bounds( nk, "窗体", area );
 
         if ( nk_begin( nk,
-                       "主窗体",
+                       "窗体",
                        nk_rect( 0.f, 0.f, 280, 220 ),
                        NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE |
                            NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE ) ) {
@@ -211,7 +212,8 @@ int main( int argc, char** argv )
         }
         nk_end( nk );
 
-        glfwGetWindowSize( window, &width, &height );
+        glfwGetFramebufferSize( window, &width, &height );
+        // glfwGetWindowSize( window, &width, &height );
         glViewport( 0, 0, width, height );
         glClearColor( bg.r, bg.g, bg.b, bg.a );
         glClear( GL_COLOR_BUFFER_BIT );
