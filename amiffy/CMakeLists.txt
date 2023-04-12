@@ -1,14 +1,17 @@
 link_libraries(glfw)
 link_libraries(logc)
 link_libraries(lua)
+link_libraries(soundio)
 
 include_directories("${AMIFFY3D_SOURCE_DIR}/3rd/glfw3/include")
 include_directories("${AMIFFY3D_SOURCE_DIR}/3rd/nuklear/include")
 include_directories("${AMIFFY3D_SOURCE_DIR}/3rd/logc/include")
 include_directories("${AMIFFY3D_SOURCE_DIR}/3rd/lua/include")
+include_directories("${AMIFFY3D_SOURCE_DIR}/3rd/soundio/include")
 
 if (MSVC OR CMAKE_C_SIMULATE_ID STREQUAL "MSVC")
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+    add_definitions(-DSOUNDIO_ON_MSVC)
 endif()
 
 set(GLAD_GL "${AMIFFY3D_SOURCE_DIR}/3rd/glfw3/include/glad/gl.h")

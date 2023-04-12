@@ -1,4 +1,4 @@
-﻿#define GLAD_GL_IMPLEMENTATION
+#define GLAD_GL_IMPLEMENTATION
 #include <glad/gl.h>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -34,12 +34,16 @@
 #include "amiffy.h"
 #include "lua_bind.h"
 
+#define SOUNDIO_STATIC_LIBRARY
+#include <soundio/soundio.h>
+
 static bool           quick = false;
 static lua_State*     lua_state;
 static FILE*          log_fd;
 struct nk_context*    nk;
 struct nk_font_atlas* atlas;
 struct nk_colorf      bg;
+struct nk_glfw        glfw = { 0 };
 
 void setup_lua()
 {
@@ -66,7 +70,8 @@ void setup_lua()
         log_error( "%s", lua_tostring( lua_state, -1 ) );
         exit( EXIT_FAILURE );
     }
-    log_info( "lua环境初始化完毕" );
+    // log_info( "lua 环境初始化完毕" );
+    // log_info( "lua 环境 lua环境初始化完毕" );
 }
 
 void setup_nk_font( struct nk_glfw* glfw, struct nk_context* nk )
@@ -129,15 +134,39 @@ static void error_callback( int e, const char* d )
     printf( "Error %d: %s\n", e, d );
 }
 
+static void init_soundio()
+{
+    int             err;
+    struct SoundIo* soundio = soundio_create();
+    if ( !soundio ) { log_error( "out of memory" ); }
+
+    if ( ( err = soundio_connect( soundio ) ) ) {
+        log_error( "error connecting: %s", soundio_strerror( err ) );
+    }
+
+    soundio_flush_events( soundio );
+
+    int default_out_device_index = soundio_default_output_device_index( soundio );
+    if ( default_out_device_index < 0 ) { log_error( "no output device found" ); }
+
+    struct SoundIoDevice* device = soundio_get_output_device( soundio, default_out_device_index );
+    if ( !device ) { log_error( "out of memory" ); }
+
+    log_info( "Output device: %s", device->name );
+}
+
 int main( int argc, char** argv )
 {
     setup_log();
 
+    init_soundio();
+
     setup_lua();
+
     glfwSetErrorCallback( error_callback );
 
     if ( !glfwInit() ) {
-        log_error( "初始化窗体失败\n" );
+        log_error( "initialization window system failed\n" );
         exit( EXIT_FAILURE );
     }
 
@@ -156,9 +185,9 @@ int main( int argc, char** argv )
     // glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
     // glfwWindowHint( GLFW_DECORATED, GLFW_FALSE );
 
-    GLFWwindow* window = glfwCreateWindow( 600, 600, "Window", NULL, NULL );
+    GLFWwindow* window = glfwCreateWindow( 600, 600, "Window 窗体", NULL, NULL );
     if ( !window ) {
-        log_error( "创建窗体失败\n" );
+        log_error( "main windows initialization failed\n" );
         glfwTerminate();
         exit( EXIT_FAILURE );
     }
@@ -171,15 +200,15 @@ int main( int argc, char** argv )
     glfwSwapInterval( 1 );
     glfwSetWindowAttrib( window, GLFW_TRANSPARENT_FRAMEBUFFER, 1 );
 
-    log_info( "初始化窗体完成" );
+    log_info( "window system initialized" );
 
-    log_info( "初始化GUI系统" );
-    struct nk_glfw glfw = { 0 };
-    nk                  = nk_glfw3_init( &glfw, window, NK_GLFW3_INSTALL_CALLBACKS );
+    log_info( "GUI system initialized" );
+
+    nk = nk_glfw3_init( &glfw, window, NK_GLFW3_INSTALL_CALLBACKS );
     setup_nk_font( &glfw, nk );
 
     glfwSetKeyCallback( window, glfwKeyCallback );
-    log_info( "绑定按键回调" );
+    log_info( "key input event initialized" );
 
     int width, height;
 
@@ -199,18 +228,18 @@ int main( int argc, char** argv )
 
         lua_update_call( width, height );
 
-        if ( nk_begin( nk,
-                       "窗体",
-                       nk_rect( 0.f, 0.f, 280, 220 ),
-                       NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE |
-                           NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE ) ) {
-            nk_layout_row_dynamic( nk, 30, 4 );
-            if ( nk_button_label( nk, "最大化" ) ) glfwMaximizeWindow( window );
-            if ( nk_button_label( nk, "最小化" ) ) glfwIconifyWindow( window );
-            if ( nk_button_label( nk, "Restore" ) ) glfwRestoreWindow( window );
-            if ( nk_button_label( nk, "关闭" ) ) quick = true;
-        }
-        nk_end( nk );
+        // if ( nk_begin( nk,
+        //                "窗体",
+        //                nk_rect( 0.f, 0.f, 280, 220 ),
+        //                NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE |
+        //                    NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE ) ) {
+        //     nk_layout_row_dynamic( nk, 30, 4 );
+        //     if ( nk_button_label( nk, "最大化" ) ) glfwMaximizeWindow( window );
+        //     if ( nk_button_label( nk, "最小化" ) ) glfwIconifyWindow( window );
+        //     if ( nk_button_label( nk, "Restore" ) ) glfwRestoreWindow( window );
+        //     if ( nk_button_label( nk, "关闭" ) ) quick = true;
+        // }
+        // nk_end( nk );
 
         glfwGetFramebufferSize( window, &width, &height );
         // glfwGetWindowSize( window, &width, &height );
@@ -227,12 +256,12 @@ int main( int argc, char** argv )
     nk_free( nk );
 
     glfwTerminate();
-    log_info( "销毁glfw" );
+    log_info( "destory glfw" );
 
     lua_close( lua_state );
-    log_info( "销毁lua虚拟机" );
+    log_info( "destory lua VM" );
 
-    log_info( "正常离开\n" );
+    log_info( "exit application" );
 
     fclose( log_fd );
     exit( EXIT_SUCCESS );
