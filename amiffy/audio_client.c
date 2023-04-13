@@ -15,12 +15,15 @@ const int BUFFER_SIZE = 128;
 
 static void ( *write_sample )( char* ptr, double sample );
 
-static const double             PI             = 3.14159265358979323846264338328;
-static double                   seconds_offset = 0.0;
-static volatile bool            want_pause     = false;
-static struct SoundIoDevice*    outdevice;
-static struct SoundIoOutStream* outstream;
-static struct SoundIo*          soundio;
+static const double               PI             = 3.14159265358979323846264338328;
+static double                     seconds_offset = 0.0;
+static volatile bool              want_pause     = false;
+static struct SoundIoDevice*      outdevice;
+static struct SoundIoOutStream*   outstream;
+static struct SoundIo*            soundio;
+static struct SoundIoChannelArea* areas;
+
+static WriteCallback app_write_callback;
 
 static void write_sample_s16ne( char* ptr, double sample )
 {
@@ -56,12 +59,12 @@ static void underflow_callback( struct SoundIoOutStream* out_stream )
     log_error( "underflow %d", count++ );
 }
 
-static void write_callback( struct SoundIoOutStream* out_stream, int frame_count_min, int frame_count_max )
+static void write_callback( struct SoundIoOutStream* out_stream, int frame_count_min,
+                            int frame_count_max )
 {
-    struct SoundIoChannelArea* areas;
-    int                        err;
-    double                     float_sample_rate = outstream->sample_rate;
-    double                     seconds_per_frame = 1.0 / float_sample_rate;
+    int    err;
+    double float_sample_rate = out_stream->sample_rate;
+    double seconds_per_frame = 1.0 / float_sample_rate;
 
     int frames_left = frame_count_max;
 
@@ -74,66 +77,47 @@ static void write_callback( struct SoundIoOutStream* out_stream, int frame_count
 
         if ( !frame_count ) { break; }
 
-        //int num_channels = out_stream->layout.channel_count;
+        int num_channels = out_stream->layout.channel_count;
 
         // Prepare the buffers for the app_read_callback
-        //struct audio_area app_buffer_areas [2];
+        struct audio_area* app_buffer_areas =
+            (struct audio_area*) malloc( num_channels * sizeof( struct audio_area ) );
 
-        //if ( instream->format == SoundIoFormatFloat32NE ) {
-            // No conversion is necessary, give the areas directly to the app
-            //for ( int i = 0; i < num_channels; ++i ) {
-            //    app_buffer_areas [i] =
-            //        Area( (float*) areas [i].ptr, frame_count, areas [i].step / sizeof( float ) );
-            //}
+        // Conversion is necessary, create a custom buffer for the app to fill
+        static float* app_buffer      = NULL;
+        static size_t app_buffer_size = 0;
 
-            // Call the user_read_callback with the buffers
-            //app_write_callback( frame_count, num_channels, app_buffer_areas );
-        //}
-        //else {
-        //    // Conversion is necessary, create a custom buffer for the app to fill
-        //    static float* app_buffer      = NULL;
-        //    static size_t app_buffer_size = 0;
+        size_t required_size = frame_count * num_channels;
 
-        //    size_t required_size = frame_count * num_channels;
+        // Allocate the app buffer
+        if ( !app_buffer || app_buffer_size < required_size ) {
+            if ( app_buffer ) { free( app_buffer ); }
+            app_buffer      = (float*) malloc( required_size * sizeof( float ) );
+            app_buffer_size = required_size;
+        }
 
-        //    // Allocate the app buffer
-        //    if ( !app_buffer || app_buffer_size < required_size ) {
-        //        if ( app_buffer ) { delete [] app_buffer; }
-        //        app_buffer      = new float [required_size];
-        //        app_buffer_size = required_size;
-        //    }
+        //// Create the app areas
+        for ( int i = 0; i < num_channels; ++i ) {
+            struct audio_area a;
+            a.ptr               = app_buffer + i;
+            a.end               = a.ptr + frame_count * num_channels;
+            a.step              = num_channels;
+            *app_buffer_areas++ = a;
+            //*app_buffer_areas++ = audio_a ( app_buffer + i, frame_count, num_channels );
+        }
 
-        //    // Create the app areas
-        //    for ( int i = 0; i < num_channels; ++i ) {
-        //        app_buffer_areas [i] = Area( app_buffer + i, frame_count, num_channels );
-        //    }
+        // Call the user_read_callback with the buffers
+        app_write_callback( frame_count, num_channels, app_buffer_areas - num_channels );
 
-        //    // Call the user_read_callback with the buffers
-        //    app_write_callback( frame_count, num_channels, app_buffer_areas );
-
-        //    // Copy back all the samples
-        //    float* app_ptr = app_buffer;
-            //for ( int i = 0; i < frame_count; ++i ) {
-            //    for ( int j = 0; j < num_channels; ++j ) {
-            //        write_sample( areas [j].ptr, *app_ptr++ );
-            //        areas [j].ptr += areas [j].step;
-            //    }
-            //}
-        //}
-
-        const struct SoundIoChannelLayout* layout = &outstream->layout;
-
-        double pitch              = 440.0;
-        double radians_per_second = pitch * 2.0 * PI;
-        for ( int frame = 0; frame < frame_count; frame += 1 ) {
-            double sample = sin( ( seconds_offset + frame * seconds_per_frame  ) *
-                                 radians_per_second );
-            for ( int channel = 0; channel < layout->channel_count; channel += 1 ) {
-                write_sample( areas [channel].ptr, sample  );
-                areas [channel].ptr += areas [channel].step;
+        // Copy back all the samples
+        float* app_ptr = app_buffer;
+        for ( int i = 0; i < frame_count; ++i ) {
+            for ( int j = 0; j < num_channels; ++j ) {
+                write_sample( areas [j].ptr, *app_ptr++ );
+                areas [j].ptr += areas [j].step;
             }
         }
-        seconds_offset = fmod( seconds_offset + seconds_per_frame * frame_count, 1.0 );
+
 
         if ( ( err = soundio_outstream_end_write( out_stream ) ) ) {
             if ( err == SoundIoErrorUnderflow ) return;
@@ -148,6 +132,8 @@ static void write_callback( struct SoundIoOutStream* out_stream, int frame_count
 
 int init_audio_client( int sample_rate, ReadCallback read_callback_, WriteCallback write_callback_ )
 {
+    app_write_callback = write_callback_;
+
     double latency = (double) BUFFER_SIZE / sample_rate;
 
     int err;
@@ -234,7 +220,8 @@ int init_audio_client( int sample_rate, ReadCallback read_callback_, WriteCallba
     return 0;
 }
 
-void destroy_audio_client() {
+void destroy_audio_client()
+{
     soundio_outstream_destroy( outstream );
     soundio_device_unref( outdevice );
     soundio_destroy( soundio );

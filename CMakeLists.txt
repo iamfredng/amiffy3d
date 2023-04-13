@@ -12,6 +12,11 @@ project(AMIFFY3D VERSION 0.1.1 LANGUAGES C)
 
 # set(CMAKE_BUILD_TYPE Release)
 
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING
+      "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+endif()
+
 include(CMakeDependentOption)
 
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
@@ -49,6 +54,7 @@ add_subdirectory(3rd/glfw3)
 add_subdirectory(3rd/logc)
 add_subdirectory(3rd/lua)
 add_subdirectory(3rd/soundio)
+add_subdirectory(3rd/nothings)
 add_subdirectory(amiffy)
 
 message("CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}")

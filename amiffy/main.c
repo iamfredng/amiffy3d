@@ -17,6 +17,7 @@
 #include <nuklear/nuklear_glfw_gl3.h>
 
 #include <log.h>
+#include <stb_vorbis.h>
 
 #include <lua/lapi.h>
 #include <lua/lauxlib.h>
@@ -134,18 +135,47 @@ static void error_callback( int e, const char* d )
     printf( "Error %d: %s\n", e, d );
 }
 
-void read_callback( int num_samples, int num_areas, struct audio_area* area ) {}
+float* output;
+short* input;
 
-void write_callback( int num_samples, int num_areas, struct audio_area* area ) {}
+static struct audio_area file_left_channel;
+static struct audio_area file_right_channel;
 
+void audio_read_callback( int num_samples, int num_areas, struct audio_area* areas ) {}
+
+void audio_write_callback( int num_samples, int num_areas, struct audio_area* areas )
+{
+    for ( int n = 0; n < num_areas; ++n ) {
+        struct audio_area area = areas [n];
+        while ( area.ptr < area.end ) { *area.ptr++ = 0.0; }
+    }
+
+    struct audio_area* in_l  = &file_left_channel;
+    struct audio_area* in_r  = &file_right_channel;
+    struct audio_area  out_l = areas [0];
+    struct audio_area  out_r = areas [1];
+    while ( in_l->ptr < in_l->end && out_l.ptr < out_l.end ) {
+        *out_l.ptr++ = *in_l->ptr++;
+        *out_r.ptr++ = *in_r->ptr++;
+    }
+}
+
+inline float convert_sample( short sample )
+{
+    return (float) ( (double) sample / 32768.0 );
+}
+
+void convert_samples( int num_samples, short* input, float* output )
+{
+    short* in_ptr     = input;
+    short* in_ptr_end = input + num_samples;
+    float* out_ptr    = output;
+    while ( in_ptr < in_ptr_end ) { *out_ptr++ = convert_sample( *in_ptr++ ); }
+}
 
 int main( int argc, char** argv )
 {
     setup_log();
-
-    init_audio_client( 44100, read_callback, write_callback );
-
-    setup_lua();
 
     glfwSetErrorCallback( error_callback );
 
@@ -193,6 +223,38 @@ int main( int argc, char** argv )
 
     glfwSetKeyCallback( window, glfwKeyCallback );
     log_info( "key input event initialized" );
+
+
+    // ------------------------------------------------------------ ogg test
+
+    const char* file_name = "D:/c/amiffy3d/audio/1000.ogg";
+
+    int num_channels, sample_rate;
+
+    int num_samples = stb_vorbis_decode_filename( file_name, &num_channels, &sample_rate, &input );
+
+    log_debug( "sample_rate: %d", sample_rate );
+    log_debug( "num_channels: %d", num_channels );
+    log_debug( "num_samples: %d", num_samples );
+
+    output = (float*) malloc( num_samples * num_channels * sizeof( float ) );
+    convert_samples( num_samples * num_channels, input, output );
+    free( input );
+
+    file_left_channel.ptr  = output;
+    file_left_channel.end  = file_left_channel.ptr + num_samples * num_channels;
+    file_left_channel.step = 2;
+
+    file_right_channel.ptr  = output + 1;
+    file_right_channel.end  = file_right_channel.ptr + num_samples * num_channels;
+    file_right_channel.step = 2;
+
+
+    // ------------------------------------------------------------ end ogg test
+
+    init_audio_client( sample_rate, audio_read_callback, audio_write_callback );
+
+    setup_lua();
 
     int width, height;
 
