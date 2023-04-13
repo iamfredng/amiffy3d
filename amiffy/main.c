@@ -32,10 +32,8 @@
 #endif
 
 #include "amiffy.h"
+#include "audio_client.h"
 #include "lua_bind.h"
-
-#define SOUNDIO_STATIC_LIBRARY
-#include <soundio/soundio.h>
 
 static bool           quick = false;
 static lua_State*     lua_state;
@@ -103,6 +101,8 @@ void setup_log()
 
     log_fd = fopen( "./log_debug.txt", "ab" );
     log_add_fp( log_fd, LOG_DEBUG );
+
+    log_info( "Amiffy Application is starting..............................." );
 }
 
 void lua_update_call( int width, int height )
@@ -134,32 +134,16 @@ static void error_callback( int e, const char* d )
     printf( "Error %d: %s\n", e, d );
 }
 
-static void init_soundio()
-{
-    int             err;
-    struct SoundIo* soundio = soundio_create();
-    if ( !soundio ) { log_error( "out of memory" ); }
+void read_callback( int num_samples, int num_areas, struct audio_area* area ) {}
 
-    if ( ( err = soundio_connect( soundio ) ) ) {
-        log_error( "error connecting: %s", soundio_strerror( err ) );
-    }
+void write_callback( int num_samples, int num_areas, struct audio_area* area ) {}
 
-    soundio_flush_events( soundio );
-
-    int default_out_device_index = soundio_default_output_device_index( soundio );
-    if ( default_out_device_index < 0 ) { log_error( "no output device found" ); }
-
-    struct SoundIoDevice* device = soundio_get_output_device( soundio, default_out_device_index );
-    if ( !device ) { log_error( "out of memory" ); }
-
-    log_info( "Output device: %s", device->name );
-}
 
 int main( int argc, char** argv )
 {
     setup_log();
 
-    init_soundio();
+    init_audio_client( 44100, read_callback, write_callback );
 
     setup_lua();
 
@@ -264,5 +248,8 @@ int main( int argc, char** argv )
     log_info( "exit application" );
 
     fclose( log_fd );
+
+    destroy_audio_client();
+
     exit( EXIT_SUCCESS );
 }

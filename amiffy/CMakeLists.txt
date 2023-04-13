@@ -23,6 +23,8 @@ endif()
 set(AMIFFY_SOURCE
     amiffy.h
     main.c
+    audio_client.h
+    audio_client.c
     lua_bind.h
     lua_bind.c
 )
