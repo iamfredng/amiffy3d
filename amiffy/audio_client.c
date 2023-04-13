@@ -1,11 +1,9 @@
 #define SOUNDIO_STATIC_LIBRARY
 #include <soundio/soundio.h>
 
-#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "audio_client.h"
 
@@ -75,7 +73,9 @@ static void write_callback( struct SoundIoOutStream* out_stream, int frame_count
             exit( 1 );
         }
 
-        if ( !frame_count ) { break; }
+        if ( !frame_count ) {
+            break;
+        }
 
         int num_channels = out_stream->layout.channel_count;
 
@@ -91,7 +91,9 @@ static void write_callback( struct SoundIoOutStream* out_stream, int frame_count
 
         // Allocate the app buffer
         if ( !app_buffer || app_buffer_size < required_size ) {
-            if ( app_buffer ) { free( app_buffer ); }
+            if ( app_buffer ) {
+                free( app_buffer );
+            }
             app_buffer      = (float*) malloc( required_size * sizeof( float ) );
             app_buffer_size = required_size;
         }
@@ -126,11 +128,14 @@ static void write_callback( struct SoundIoOutStream* out_stream, int frame_count
         }
 
         frames_left -= frame_count;
-        if ( frames_left <= 0 ) { break; }
+        if ( frames_left <= 0 ) {
+            break;
+        }
     }
 }
 
-int init_audio_client( int sample_rate, ReadCallback read_callback_, WriteCallback write_callback_ )
+static int init_audio_client( int sample_rate, ReadCallback read_callback_,
+                              WriteCallback write_callback_ )
 {
     app_write_callback = write_callback_;
 
@@ -151,12 +156,16 @@ int init_audio_client( int sample_rate, ReadCallback read_callback_, WriteCallba
     soundio_flush_events( soundio );
 
     int out_device_count = soundio_output_device_count( soundio );
-    if ( out_device_count < 0 ) { log_error( "no output device found" ); }
+    if ( out_device_count < 0 ) {
+        log_error( "no output device found" );
+    }
 
     log_debug( "out device count: %d", out_device_count );
 
     int default_out_device_index = soundio_default_output_device_index( soundio );
-    if ( default_out_device_index < 0 ) { log_error( "no output device found" ); }
+    if ( default_out_device_index < 0 ) {
+        log_error( "no output device found" );
+    }
 
     struct SoundIoDevice* device = soundio_get_output_device( soundio, default_out_device_index );
     if ( !device ) {
@@ -165,7 +174,6 @@ int init_audio_client( int sample_rate, ReadCallback read_callback_, WriteCallba
     }
 
     log_info( "Output device: %s", device->name );
-
 
     outstream = soundio_outstream_create( device );
     if ( !outstream ) {
@@ -220,7 +228,7 @@ int init_audio_client( int sample_rate, ReadCallback read_callback_, WriteCallba
     return 0;
 }
 
-void destroy_audio_client()
+static void destroy_audio_client()
 {
     soundio_outstream_destroy( outstream );
     soundio_device_unref( outdevice );
