@@ -1,4 +1,4 @@
-add_library(lua STATIC
+add_library(lua OBJECT
     src/lapi.c src/lauxlib.c src/lbaselib.c src/lcode.c src/lcorolib.c
     src/lctype.c src/ldblib.c src/ldebug.c src/ldo.c src/ldump.c src/lfunc.c
     src/lgc.c src/linit.c src/liolib.c src/llex.c src/lmathlib.c
@@ -12,3 +12,5 @@ target_include_directories(lua PRIVATE "include/lua")
 
 set_target_properties(lua PROPERTIES
     C_STANDARD 99)
+
+target_compile_definitions(lua PRIVATE UNICODE _UNICODE)

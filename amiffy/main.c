@@ -61,7 +61,7 @@ void hotreload_lua()
     if ( rvl != 0 ) {
         log_error( "reload init 失败, %d", rvl );
         log_error( "%s", lua_tostring( lua_state, -1 ) );
-        exit( EXIT_FAILURE );
+//        exit( EXIT_FAILURE );
     }
 }
 
@@ -70,13 +70,20 @@ void init_lua()
     // 设置基础函数和nk的窗体常量
     luaL_dostring(
         lua_state,
-        "function reload(module) package.loaded[module] = nil; return require(module); end; "
-        "_G['NK_FLAG'] = function(inv) return 1 << inv end; NK_WINDOW_BORDER = "
-        "NK_FLAG(0);NK_WINDOW_MOVABLE = NK_FLAG(1);NK_WINDOW_SCALABLE = "
-        "NK_FLAG(2);NK_WINDOW_CLOSABLE = NK_FLAG(3);NK_WINDOW_MINIMIZABLE = "
-        "NK_FLAG(4);NK_WINDOW_NO_SCROLLBAR = NK_FLAG(5);NK_WINDOW_TITLE = "
-        "NK_FLAG(6);NK_WINDOW_SCROLL_AUTO_HIDE = NK_FLAG(7);NK_WINDOW_BACKGROUND = "
-        "NK_FLAG(8);NK_WINDOW_SCALE_LEFT = NK_FLAG(9);NK_WINDOW_NO_INPUT = NK_FLAG(10); " );
+        "package.cpath=package.cpath .. ';./clib/?.dll;./clib/?.so'"
+        "function reload(module) package.loaded[module] = nil; return require(module); end;"
+        "_G['NK_FLAG'] = function(inv) return 1 << inv end;"
+        "NK_WINDOW_BORDER = NK_FLAG(0);"
+        "NK_WINDOW_MOVABLE = NK_FLAG(1);"
+        "NK_WINDOW_SCALABLE = NK_FLAG(2);"
+        "NK_WINDOW_CLOSABLE = NK_FLAG(3);"
+        "NK_WINDOW_MINIMIZABLE = NK_FLAG(4);"
+        "NK_WINDOW_NO_SCROLLBAR = NK_FLAG(5);"
+        "NK_WINDOW_TITLE = NK_FLAG(6);"
+        "NK_WINDOW_SCROLL_AUTO_HIDE = NK_FLAG(7);"
+        "NK_WINDOW_BACKGROUND = NK_FLAG(8);"
+        "NK_WINDOW_SCALE_LEFT = NK_FLAG(9);"
+        "NK_WINDOW_NO_INPUT = NK_FLAG(10);" );
 
     // 初始化脚本
     int rvl = luaL_dostring( lua_state,
@@ -94,7 +101,7 @@ void init_lua()
     if ( rvl != 0 ) {
         log_error( "init 失败, %d", rvl );
         log_error( "%s", lua_tostring( lua_state, -1 ) );
-        exit( EXIT_FAILURE );
+//        exit( EXIT_FAILURE );
     }
 }
 
