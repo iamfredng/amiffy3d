@@ -17,6 +17,6 @@
 /* #undef SOUNDIO_HAVE_PULSEAUDIO */
 /* #undef SOUNDIO_HAVE_ALSA */
 /* #undef SOUNDIO_HAVE_COREAUDIO */
-#define SOUNDIO_HAVE_WASAPI
+/* #undef SOUNDIO_HAVE_WASAPI */
 
 #endif

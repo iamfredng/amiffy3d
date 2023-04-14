@@ -45,7 +45,9 @@ static bool reload_lua = false;
 
 void hotreload_lua()
 {
-    luaL_dostring(lua_state, "_G['amiffy_init'] = reload('init'); _G['init'] = amiffy_init.init; _G['update'] = amiffy_init.update");
+    luaL_dostring( lua_state,
+                   "_G['amiffy_init'] = reload('init'); _G['init'] = amiffy_init.init; "
+                   "_G['update'] = amiffy_init.update" );
 
     lua_getglobal( lua_state, "init" );
     int rvl = lua_pcall( lua_state, 0, 0, 0 );
@@ -59,10 +61,20 @@ void hotreload_lua()
 void init_lua()
 {
     // 设置基础函数和nk的窗体常量
-    luaL_dostring(lua_state, "function reload(module) package.loaded[module] = nil; return require(module); end; _G['NK_FLAG'] = function(inv) return 1 << inv end; NK_WINDOW_BORDER = NK_FLAG(0);NK_WINDOW_MOVABLE = NK_FLAG(1);NK_WINDOW_SCALABLE = NK_FLAG(2);NK_WINDOW_CLOSABLE = NK_FLAG(3);NK_WINDOW_MINIMIZABLE = NK_FLAG(4);NK_WINDOW_NO_SCROLLBAR = NK_FLAG(5);NK_WINDOW_TITLE = NK_FLAG(6);NK_WINDOW_SCROLL_AUTO_HIDE = NK_FLAG(7);NK_WINDOW_BACKGROUND = NK_FLAG(8);NK_WINDOW_SCALE_LEFT = NK_FLAG(9);NK_WINDOW_NO_INPUT = NK_FLAG(10); ");
+    luaL_dostring(
+        lua_state,
+        "function reload(module) package.loaded[module] = nil; return require(module); end; "
+        "_G['NK_FLAG'] = function(inv) return 1 << inv end; NK_WINDOW_BORDER = "
+        "NK_FLAG(0);NK_WINDOW_MOVABLE = NK_FLAG(1);NK_WINDOW_SCALABLE = "
+        "NK_FLAG(2);NK_WINDOW_CLOSABLE = NK_FLAG(3);NK_WINDOW_MINIMIZABLE = "
+        "NK_FLAG(4);NK_WINDOW_NO_SCROLLBAR = NK_FLAG(5);NK_WINDOW_TITLE = "
+        "NK_FLAG(6);NK_WINDOW_SCROLL_AUTO_HIDE = NK_FLAG(7);NK_WINDOW_BACKGROUND = "
+        "NK_FLAG(8);NK_WINDOW_SCALE_LEFT = NK_FLAG(9);NK_WINDOW_NO_INPUT = NK_FLAG(10); " );
 
     // 初始化脚本
-    int rvl = luaL_dostring( lua_state, "_G['amiffy_init'] = require('init'); _G['init'] = amiffy_init.init; _G['update'] = amiffy_init.update" );
+    int rvl = luaL_dostring( lua_state,
+                             "_G['amiffy_init'] = require('init'); _G['init'] = amiffy_init.init; "
+                             "_G['update'] = amiffy_init.update" );
     if ( rvl != 0 ) {
         log_error( "init 失败, %d", rvl );
         log_error( "%s", lua_tostring( lua_state, -1 ) );
@@ -79,7 +91,7 @@ void init_lua()
     }
 }
 
-void setup_lua()
+void setup_lua( double width, double height )
 {
     lua_state = luaL_newstate();
     luaL_openlibs( lua_state );
@@ -87,23 +99,23 @@ void setup_lua()
 
     bind_amiffy_modules( lua_state );
 
-    lua_newtable(lua_state);
-    lua_pushnumber(lua_state, 0);
-    lua_setfield(lua_state, -2, "width");
-    lua_pushnumber(lua_state, 0);
-    lua_setfield(lua_state, -2, "height");
-    lua_setglobal(lua_state, "window");
+    lua_newtable( lua_state );
+    lua_pushnumber( lua_state, width );
+    lua_setfield( lua_state, -2, "width" );
+    lua_pushnumber( lua_state, height );
+    lua_setfield( lua_state, -2, "height" );
+    lua_setglobal( lua_state, "window" );
 
     init_lua();
 }
 
 void lua_update_call( int width, int height )
 {
-    lua_getglobal(lua_state, "window");
-    lua_pushnumber(lua_state, width);
-    lua_setfield(lua_state, -2, "width");
-    lua_pushnumber(lua_state, height);
-    lua_setfield(lua_state, -2, "height");
+    lua_getglobal( lua_state, "window" );
+    lua_pushnumber( lua_state, width );
+    lua_setfield( lua_state, -2, "width" );
+    lua_pushnumber( lua_state, height );
+    lua_setfield( lua_state, -2, "height" );
 
     lua_getglobal( lua_state, "update" );
     int rvl = lua_pcall( lua_state, 0, 0, 0 );
@@ -156,36 +168,36 @@ static void setup_log()
 
 static void setup_ui_style()
 {
-    struct nk_color table[NK_COLOR_COUNT];
-    table[NK_COLOR_TEXT] = nk_rgba(190, 190, 190, 255);
-    table[NK_COLOR_WINDOW] = nk_rgba(30, 33, 40, 215);
-    table[NK_COLOR_HEADER] = nk_rgba(181, 45, 69, 220);
-    table[NK_COLOR_BORDER] = nk_rgba(51, 55, 67, 255);
-    table[NK_COLOR_BUTTON] = nk_rgba(181, 45, 69, 255);
-    table[NK_COLOR_BUTTON_HOVER] = nk_rgba(190, 50, 70, 255);
-    table[NK_COLOR_BUTTON_ACTIVE] = nk_rgba(195, 55, 75, 255);
-    table[NK_COLOR_TOGGLE] = nk_rgba(51, 55, 67, 255);
-    table[NK_COLOR_TOGGLE_HOVER] = nk_rgba(45, 60, 60, 255);
-    table[NK_COLOR_TOGGLE_CURSOR] = nk_rgba(181, 45, 69, 255);
-    table[NK_COLOR_SELECT] = nk_rgba(51, 55, 67, 255);
-    table[NK_COLOR_SELECT_ACTIVE] = nk_rgba(181, 45, 69, 255);
-    table[NK_COLOR_SLIDER] = nk_rgba(51, 55, 67, 255);
-    table[NK_COLOR_SLIDER_CURSOR] = nk_rgba(181, 45, 69, 255);
-    table[NK_COLOR_SLIDER_CURSOR_HOVER] = nk_rgba(186, 50, 74, 255);
-    table[NK_COLOR_SLIDER_CURSOR_ACTIVE] = nk_rgba(191, 55, 79, 255);
-    table[NK_COLOR_PROPERTY] = nk_rgba(51, 55, 67, 255);
-    table[NK_COLOR_EDIT] = nk_rgba(51, 55, 67, 225);
-    table[NK_COLOR_EDIT_CURSOR] = nk_rgba(190, 190, 190, 255);
-    table[NK_COLOR_COMBO] = nk_rgba(51, 55, 67, 255);
-    table[NK_COLOR_CHART] = nk_rgba(51, 55, 67, 255);
-    table[NK_COLOR_CHART_COLOR] = nk_rgba(170, 40, 60, 255);
-    table[NK_COLOR_CHART_COLOR_HIGHLIGHT] = nk_rgba( 255, 0, 0, 255);
-    table[NK_COLOR_SCROLLBAR] = nk_rgba(30, 33, 40, 255);
-    table[NK_COLOR_SCROLLBAR_CURSOR] = nk_rgba(64, 84, 95, 255);
-    table[NK_COLOR_SCROLLBAR_CURSOR_HOVER] = nk_rgba(70, 90, 100, 255);
-    table[NK_COLOR_SCROLLBAR_CURSOR_ACTIVE] = nk_rgba(75, 95, 105, 255);
-    table[NK_COLOR_TAB_HEADER] = nk_rgba(181, 45, 69, 220);
-    nk_style_from_table(nk, table);
+    struct nk_color table [NK_COLOR_COUNT];
+    table [NK_COLOR_TEXT]                    = nk_rgba( 190, 190, 190, 255 );
+    table [NK_COLOR_WINDOW]                  = nk_rgba( 30, 33, 40, 215 );
+    table [NK_COLOR_HEADER]                  = nk_rgba( 181, 45, 69, 220 );
+    table [NK_COLOR_BORDER]                  = nk_rgba( 51, 55, 67, 255 );
+    table [NK_COLOR_BUTTON]                  = nk_rgba( 181, 45, 69, 255 );
+    table [NK_COLOR_BUTTON_HOVER]            = nk_rgba( 190, 50, 70, 255 );
+    table [NK_COLOR_BUTTON_ACTIVE]           = nk_rgba( 195, 55, 75, 255 );
+    table [NK_COLOR_TOGGLE]                  = nk_rgba( 51, 55, 67, 255 );
+    table [NK_COLOR_TOGGLE_HOVER]            = nk_rgba( 45, 60, 60, 255 );
+    table [NK_COLOR_TOGGLE_CURSOR]           = nk_rgba( 181, 45, 69, 255 );
+    table [NK_COLOR_SELECT]                  = nk_rgba( 51, 55, 67, 255 );
+    table [NK_COLOR_SELECT_ACTIVE]           = nk_rgba( 181, 45, 69, 255 );
+    table [NK_COLOR_SLIDER]                  = nk_rgba( 51, 55, 67, 255 );
+    table [NK_COLOR_SLIDER_CURSOR]           = nk_rgba( 181, 45, 69, 255 );
+    table [NK_COLOR_SLIDER_CURSOR_HOVER]     = nk_rgba( 186, 50, 74, 255 );
+    table [NK_COLOR_SLIDER_CURSOR_ACTIVE]    = nk_rgba( 191, 55, 79, 255 );
+    table [NK_COLOR_PROPERTY]                = nk_rgba( 51, 55, 67, 255 );
+    table [NK_COLOR_EDIT]                    = nk_rgba( 51, 55, 67, 225 );
+    table [NK_COLOR_EDIT_CURSOR]             = nk_rgba( 190, 190, 190, 255 );
+    table [NK_COLOR_COMBO]                   = nk_rgba( 51, 55, 67, 255 );
+    table [NK_COLOR_CHART]                   = nk_rgba( 51, 55, 67, 255 );
+    table [NK_COLOR_CHART_COLOR]             = nk_rgba( 170, 40, 60, 255 );
+    table [NK_COLOR_CHART_COLOR_HIGHLIGHT]   = nk_rgba( 255, 0, 0, 255 );
+    table [NK_COLOR_SCROLLBAR]               = nk_rgba( 30, 33, 40, 255 );
+    table [NK_COLOR_SCROLLBAR_CURSOR]        = nk_rgba( 64, 84, 95, 255 );
+    table [NK_COLOR_SCROLLBAR_CURSOR_HOVER]  = nk_rgba( 70, 90, 100, 255 );
+    table [NK_COLOR_SCROLLBAR_CURSOR_ACTIVE] = nk_rgba( 75, 95, 105, 255 );
+    table [NK_COLOR_TAB_HEADER]              = nk_rgba( 181, 45, 69, 220 );
+    nk_style_from_table( nk, table );
 }
 
 static void text_input( GLFWwindow* win, unsigned int codepoint )
@@ -300,34 +312,35 @@ int main( int argc, char** argv )
 
     // ------------------------------------------------------------ ogg test
 
-//    const char* file_name = "D:/c/amiffy3d/audio/1000.ogg";
-//
-//    int num_channels, sample_rate;
-//    int num_samples = stb_vorbis_decode_filename( file_name, &num_channels, &sample_rate, &input );
-//
-//    log_debug( "sample_rate: %d", sample_rate );
-//    log_debug( "num_channels: %d", num_channels );
-//    log_debug( "num_samples: %d", num_samples );
-//
-//    output = (float*) malloc( num_samples * num_channels * sizeof( float ) );
-//    convert_samples( num_samples * num_channels, input, output );
-//    free( input );
-//
-//    file_left_channel.ptr  = output;
-//    file_left_channel.end  = file_left_channel.ptr + num_samples * num_channels;
-//    file_left_channel.step = 2;
-//
-//    file_right_channel.ptr  = output + 1;
-//    file_right_channel.end  = file_right_channel.ptr + num_samples * num_channels;
-//    file_right_channel.step = 2;
+    //    const char* file_name = "D:/c/amiffy3d/audio/1000.ogg";
+    //
+    //    int num_channels, sample_rate;
+    //    int num_samples = stb_vorbis_decode_filename( file_name, &num_channels, &sample_rate,
+    //    &input );
+    //
+    //    log_debug( "sample_rate: %d", sample_rate );
+    //    log_debug( "num_channels: %d", num_channels );
+    //    log_debug( "num_samples: %d", num_samples );
+    //
+    //    output = (float*) malloc( num_samples * num_channels * sizeof( float ) );
+    //    convert_samples( num_samples * num_channels, input, output );
+    //    free( input );
+    //
+    //    file_left_channel.ptr  = output;
+    //    file_left_channel.end  = file_left_channel.ptr + num_samples * num_channels;
+    //    file_left_channel.step = 2;
+    //
+    //    file_right_channel.ptr  = output + 1;
+    //    file_right_channel.end  = file_right_channel.ptr + num_samples * num_channels;
+    //    file_right_channel.step = 2;
 
     // ------------------------------------------------------------ end ogg test
 
-//    init_audio_client( sample_rate, audio_read_callback, audio_write_callback );
-
-    setup_lua();
-
+    //    init_audio_client( sample_rate, audio_read_callback, audio_write_callback );
     int width, height;
+    glfwGetWindowSize( window, &width, &height );
+
+    setup_lua( width, height );
 
     while ( !quick && !glfwWindowShouldClose( window ) ) {
 
@@ -339,6 +352,7 @@ int main( int argc, char** argv )
         glfwWaitEvents();
         // glfwWaitEventsTimeout( 0.016f );
 #endif
+
         nk_glfw3_new_frame( &glfw );
 
         glfwGetWindowSize( window, &width, &height );
