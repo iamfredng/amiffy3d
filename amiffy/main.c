@@ -154,6 +154,40 @@ static void setup_log()
     log_info( "Amiffy Application is starting..............................." );
 }
 
+static void setup_ui_style()
+{
+    struct nk_color table[NK_COLOR_COUNT];
+    table[NK_COLOR_TEXT] = nk_rgba(190, 190, 190, 255);
+    table[NK_COLOR_WINDOW] = nk_rgba(30, 33, 40, 215);
+    table[NK_COLOR_HEADER] = nk_rgba(181, 45, 69, 220);
+    table[NK_COLOR_BORDER] = nk_rgba(51, 55, 67, 255);
+    table[NK_COLOR_BUTTON] = nk_rgba(181, 45, 69, 255);
+    table[NK_COLOR_BUTTON_HOVER] = nk_rgba(190, 50, 70, 255);
+    table[NK_COLOR_BUTTON_ACTIVE] = nk_rgba(195, 55, 75, 255);
+    table[NK_COLOR_TOGGLE] = nk_rgba(51, 55, 67, 255);
+    table[NK_COLOR_TOGGLE_HOVER] = nk_rgba(45, 60, 60, 255);
+    table[NK_COLOR_TOGGLE_CURSOR] = nk_rgba(181, 45, 69, 255);
+    table[NK_COLOR_SELECT] = nk_rgba(51, 55, 67, 255);
+    table[NK_COLOR_SELECT_ACTIVE] = nk_rgba(181, 45, 69, 255);
+    table[NK_COLOR_SLIDER] = nk_rgba(51, 55, 67, 255);
+    table[NK_COLOR_SLIDER_CURSOR] = nk_rgba(181, 45, 69, 255);
+    table[NK_COLOR_SLIDER_CURSOR_HOVER] = nk_rgba(186, 50, 74, 255);
+    table[NK_COLOR_SLIDER_CURSOR_ACTIVE] = nk_rgba(191, 55, 79, 255);
+    table[NK_COLOR_PROPERTY] = nk_rgba(51, 55, 67, 255);
+    table[NK_COLOR_EDIT] = nk_rgba(51, 55, 67, 225);
+    table[NK_COLOR_EDIT_CURSOR] = nk_rgba(190, 190, 190, 255);
+    table[NK_COLOR_COMBO] = nk_rgba(51, 55, 67, 255);
+    table[NK_COLOR_CHART] = nk_rgba(51, 55, 67, 255);
+    table[NK_COLOR_CHART_COLOR] = nk_rgba(170, 40, 60, 255);
+    table[NK_COLOR_CHART_COLOR_HIGHLIGHT] = nk_rgba( 255, 0, 0, 255);
+    table[NK_COLOR_SCROLLBAR] = nk_rgba(30, 33, 40, 255);
+    table[NK_COLOR_SCROLLBAR_CURSOR] = nk_rgba(64, 84, 95, 255);
+    table[NK_COLOR_SCROLLBAR_CURSOR_HOVER] = nk_rgba(70, 90, 100, 255);
+    table[NK_COLOR_SCROLLBAR_CURSOR_ACTIVE] = nk_rgba(75, 95, 105, 255);
+    table[NK_COLOR_TAB_HEADER] = nk_rgba(181, 45, 69, 220);
+    nk_style_from_table(nk, table);
+}
+
 static void text_input( GLFWwindow* win, unsigned int codepoint )
 {
     nk_input_unicode( (struct nk_context*) glfwGetWindowUserPointer( win ), codepoint );
@@ -258,6 +292,7 @@ int main( int argc, char** argv )
     log_info( "GUI system initialized" );
 
     nk = nk_glfw3_init( &glfw, window, NK_GLFW3_INSTALL_CALLBACKS );
+    setup_ui_style();
     setup_nk_font( &glfw, nk );
 
     glfwSetKeyCallback( window, glfwKeyCallback );
@@ -265,31 +300,30 @@ int main( int argc, char** argv )
 
     // ------------------------------------------------------------ ogg test
 
-    const char* file_name = "D:/c/amiffy3d/audio/1000.ogg";
-
-    int num_channels, sample_rate;
-
-    int num_samples = stb_vorbis_decode_filename( file_name, &num_channels, &sample_rate, &input );
-
-    log_debug( "sample_rate: %d", sample_rate );
-    log_debug( "num_channels: %d", num_channels );
-    log_debug( "num_samples: %d", num_samples );
-
-    output = (float*) malloc( num_samples * num_channels * sizeof( float ) );
-    convert_samples( num_samples * num_channels, input, output );
-    free( input );
-
-    file_left_channel.ptr  = output;
-    file_left_channel.end  = file_left_channel.ptr + num_samples * num_channels;
-    file_left_channel.step = 2;
-
-    file_right_channel.ptr  = output + 1;
-    file_right_channel.end  = file_right_channel.ptr + num_samples * num_channels;
-    file_right_channel.step = 2;
+//    const char* file_name = "D:/c/amiffy3d/audio/1000.ogg";
+//
+//    int num_channels, sample_rate;
+//    int num_samples = stb_vorbis_decode_filename( file_name, &num_channels, &sample_rate, &input );
+//
+//    log_debug( "sample_rate: %d", sample_rate );
+//    log_debug( "num_channels: %d", num_channels );
+//    log_debug( "num_samples: %d", num_samples );
+//
+//    output = (float*) malloc( num_samples * num_channels * sizeof( float ) );
+//    convert_samples( num_samples * num_channels, input, output );
+//    free( input );
+//
+//    file_left_channel.ptr  = output;
+//    file_left_channel.end  = file_left_channel.ptr + num_samples * num_channels;
+//    file_left_channel.step = 2;
+//
+//    file_right_channel.ptr  = output + 1;
+//    file_right_channel.end  = file_right_channel.ptr + num_samples * num_channels;
+//    file_right_channel.step = 2;
 
     // ------------------------------------------------------------ end ogg test
 
-    init_audio_client( sample_rate, audio_read_callback, audio_write_callback );
+//    init_audio_client( sample_rate, audio_read_callback, audio_write_callback );
 
     setup_lua();
 
