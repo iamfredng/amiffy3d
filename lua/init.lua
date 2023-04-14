@@ -6,7 +6,7 @@ local app_ui_data = {
     background_color = '#7d94b5',
     top_left_dock = { show = true, height = 60, flags = NK_WINDOW_NO_SCROLLBAR },
     left_dock = { show = true, x = 0, y = 140, width = 160, height = 400, id = 'LD',
-                  flags = NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_SCALABLE | NK_WINDOW_TITLE | NK_WINDOW_MINIMIZABLE | NK_WINDOW_BORDER | NK_WINDOW_MOVABLE },
+                  flags = NK_WINDOW_NO_SCROLLBAR |NK_WINDOW_BORDER },
 }
 
 local app_capabilities = {
@@ -23,6 +23,13 @@ local app_capabilities = {
                             log.info('window ' .. tostring(window.width) .. 'x' .. tostring(window.height))
                         end
                     })
+                end
+            },
+            {
+                label = '删除icon',
+                callback = function(target)
+                    log.debug('第二个 is clicked')
+                    table.remove(target)
                 end
             },
         }
@@ -52,10 +59,7 @@ local app_ui = {
 
     showTopLeftDock = function(self)
         if (app_ui_data.top_left_dock.show) then
-            if (imgui.begin_window('top_left_dock',
-                    0,
-                    0,
-                    window.width,
+            if (imgui.begin_window('top_left_dock', 0, 0, window.width,
                     app_ui_data.top_left_dock.height,
                     app_ui_data.top_left_dock.flags
             )) then

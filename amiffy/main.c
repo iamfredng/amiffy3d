@@ -21,6 +21,9 @@
 #define NK_IMPLEMENTATION
 #define NK_GLFW_GL3_IMPLEMENTATION
 #define NK_KEYSTATE_BASED_INPUT
+#include <nuklear/nuklear.h>
+#include <nuklear/nuklear_glfw_gl3.h>
+
 #include "amiffy.h"
 #include "audio_client.h"
 #include "lua_bind.h"
@@ -29,8 +32,6 @@
 #include <lua/lauxlib.h>
 #include <lua/lua.h>
 #include <lua/lualib.h>
-#include <nuklear/nuklear.h>
-#include <nuklear/nuklear_glfw_gl3.h>
 #include <stb_vorbis.h>
 
 static bool           quick = false;
@@ -40,6 +41,12 @@ struct nk_context*    nk;
 struct nk_font_atlas* atlas;
 struct nk_colorf      bg;
 struct nk_glfw        glfw = { 0 };
+
+float* output;
+short* input;
+
+static struct audio_area file_left_channel;
+static struct audio_area file_right_channel;
 
 static bool reload_lua = false;
 
@@ -198,6 +205,9 @@ static void setup_ui_style()
     table [NK_COLOR_SCROLLBAR_CURSOR_ACTIVE] = nk_rgba( 75, 95, 105, 255 );
     table [NK_COLOR_TAB_HEADER]              = nk_rgba( 181, 45, 69, 220 );
     nk_style_from_table( nk, table );
+
+    nk->style.window.padding = nk_vec2( 2, 2 );
+    //    nk->style.window.border = 0;
 }
 
 static void text_input( GLFWwindow* win, unsigned int codepoint )
@@ -217,14 +227,7 @@ static void error_callback( int e, const char* d )
     printf( "Error %d: %s\n", e, d );
 }
 
-float* output;
-short* input;
-
-static struct audio_area file_left_channel;
-static struct audio_area file_right_channel;
-
 void audio_read_callback( int num_samples, int num_areas, struct audio_area* areas ) {}
-
 void audio_write_callback( int num_samples, int num_areas, struct audio_area* areas )
 {
     for ( int n = 0; n < num_areas; ++n ) {
@@ -274,7 +277,7 @@ int main( int argc, char** argv )
     glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 3 );
     glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 3 );
     glfwWindowHint( GLFW_CONTEXT_DEBUG, GLFW_TRUE );
-    glfwWindowHint( GLFW_SCALE_TO_MONITOR, GLFW_TRUE );
+    glfwWindowHint( GLFW_SCALE_TO_MONITOR, GLFW_FALSE );
     glfwWindowHint( GLFW_WIN32_KEYBOARD_MENU, GLFW_TRUE );
     glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
 
@@ -282,7 +285,7 @@ int main( int argc, char** argv )
     // glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE );
     // glfwWindowHint( GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE );
     // glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
-    // glfwWindowHint( GLFW_DECORATED, GLFW_FALSE );
+    //     glfwWindowHint( GLFW_DECORATED, GLFW_FALSE );
 
     GLFWwindow* window = glfwCreateWindow( 600, 600, "Window 窗体", NULL, NULL );
     if ( !window ) {
@@ -298,14 +301,12 @@ int main( int argc, char** argv )
     gladLoadGL( glfwGetProcAddress );
     glfwSwapInterval( 1 );
     glfwSetWindowAttrib( window, GLFW_TRANSPARENT_FRAMEBUFFER, 1 );
-
     log_info( "window system initialized" );
-
-    log_info( "GUI system initialized" );
 
     nk = nk_glfw3_init( &glfw, window, NK_GLFW3_INSTALL_CALLBACKS );
     setup_ui_style();
     setup_nk_font( &glfw, nk );
+    log_info( "GUI system initialized" );
 
     glfwSetKeyCallback( window, glfwKeyCallback );
     log_info( "key input event initialized" );
