@@ -19,7 +19,8 @@ endif()
 
 include(CMakeDependentOption)
 
-option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+#option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+#option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
 cmake_dependent_option(GLFW_USE_HYBRID_HPG "Force use of high-performance GPU on hybrid systems" OFF
                        "WIN32" OFF)
@@ -55,6 +56,5 @@ add_subdirectory(3rd/logc)
 add_subdirectory(3rd/lua)
 add_subdirectory(3rd/soundio)
 add_subdirectory(3rd/nothings)
+add_subdirectory(amiffy_ex)
 add_subdirectory(amiffy)
-
-message("CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE}")
