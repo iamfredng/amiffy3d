@@ -6,41 +6,43 @@
 #include <lua/lauxlib.h>
 #include <lua/lua.h>
 
-int c_log_debug( lua_State* L )
+#include "lua_print_stack.h"
+
+static int c_log_debug( lua_State* L )
 {
     const char* str = lua_tostring( L, 1 );
     log_debug( "%s", str );
     return 0;
 }
 
-int c_log_warn( lua_State* L )
+static int c_log_warn( lua_State* L )
 {
     const char* str = lua_tostring( L, 1 );
     log_warn( "%s", str );
     return 0;
 }
 
-int c_log_error( lua_State* L )
+static int c_log_error( lua_State* L )
 {
     const char* str = lua_tostring( L, 1 );
     log_error( "%s", str );
     return 0;
 }
 
-int c_log_info( lua_State* L )
+static int c_log_info( lua_State* L )
 {
     const char* str = lua_tostring( L, 1 );
     log_info( "%s", str );
     return 0;
 }
 
-int imgui_end_window( lua_State* L )
+static int imgui_end_window( lua_State* L )
 {
     nk_end( nk );
     return 0;
 }
 
-int imgui_begin_window( lua_State* L )
+static int imgui_begin_window( lua_State* L )
 {
     const char* winname = lua_tostring( L, 1 );
     float       x       = lua_tonumber( L, 2 );
@@ -54,7 +56,7 @@ int imgui_begin_window( lua_State* L )
     return 1;
 }
 
-int imgui_button( lua_State* L )
+static int imgui_button( lua_State* L )
 {
     const char* title = lua_tostring( L, 1 );
     nk_bool     rvl   = nk_button_label( nk, title );
@@ -62,14 +64,14 @@ int imgui_button( lua_State* L )
     return 1;
 }
 
-int imgui_layout_row_push( lua_State* L )
+static int imgui_layout_row_push( lua_State* L )
 {
     float num = lua_tonumber( L, 1 );
     nk_layout_row_push( nk, num );
     return 0;
 }
 
-int imgui_layout_row_dynamic( lua_State* L )
+static int imgui_layout_row_dynamic( lua_State* L )
 {
     float height = lua_tonumber( L, 1 );
     int   col    = lua_tonumber( L, 2 );
@@ -77,7 +79,7 @@ int imgui_layout_row_dynamic( lua_State* L )
     return 0;
 }
 
-int imgui_layout_row_static( lua_State* L )
+static int imgui_layout_row_static( lua_State* L )
 {
     float height    = lua_tonumber( L, 1 );
     int   itemWidth = lua_tonumber( L, 2 );
@@ -86,7 +88,7 @@ int imgui_layout_row_static( lua_State* L )
     return 0;
 }
 
-int imgui_change_bg_color( lua_State* L )
+static int imgui_change_bg_color( lua_State* L )
 {
     float r = lua_tonumber( L, 1 );
     float g = lua_tonumber( L, 2 );
@@ -101,7 +103,7 @@ int imgui_change_bg_color( lua_State* L )
     return 0;
 }
 
-int luaopen_log( lua_State* L )
+static int luaopen_log( lua_State* L )
 {
     luaL_Reg log [] = { { "info", c_log_info },
                         { "debug", c_log_debug },
@@ -115,7 +117,7 @@ int luaopen_log( lua_State* L )
     return 1;
 }
 
-int luaopen_imgui( lua_State* L )
+static int luaopen_imgui( lua_State* L )
 {
     luaL_Reg l [] = { { "change_bg_color", imgui_change_bg_color },
                       { "begin_window", imgui_begin_window },
@@ -132,9 +134,16 @@ int luaopen_imgui( lua_State* L )
     return 1;
 }
 
+static int c_print_stack(lua_State *L)
+{
+    print_stack(L);
+    return 0;
+}
+
 static bool bind_amiffy_modules( lua_State* L )
 {
     lua_register( L, "c_log_info", c_log_info );
+    lua_register(L, "c_print_stack", c_print_stack);
 
     lua_getglobal( L, "package" );
     lua_getfield( L, -1, "preload" );

@@ -87,15 +87,26 @@ void setup_lua()
 
     bind_amiffy_modules( lua_state );
 
+    lua_newtable(lua_state);
+    lua_pushnumber(lua_state, 0);
+    lua_setfield(lua_state, -2, "width");
+    lua_pushnumber(lua_state, 0);
+    lua_setfield(lua_state, -2, "height");
+    lua_setglobal(lua_state, "window");
+
     init_lua();
 }
 
 void lua_update_call( int width, int height )
 {
+    lua_getglobal(lua_state, "window");
+    lua_pushnumber(lua_state, width);
+    lua_setfield(lua_state, -2, "width");
+    lua_pushnumber(lua_state, height);
+    lua_setfield(lua_state, -2, "height");
+
     lua_getglobal( lua_state, "update" );
-    lua_pushnumber( lua_state, width );
-    lua_pushnumber( lua_state, height );
-    int rvl = lua_pcall( lua_state, 2, 0, 0 );
+    int rvl = lua_pcall( lua_state, 0, 0, 0 );
     if ( rvl != 0 ) {
         log_error( "lua_update_call 失败, %d", rvl );
         log_error( "%s", lua_tostring( lua_state, -1 ) );
@@ -221,7 +232,6 @@ int main( int argc, char** argv )
     glfwWindowHint( GLFW_WIN32_KEYBOARD_MENU, GLFW_TRUE );
     glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
 
-
     // 透明无边框窗体, 最好配合全屏
     // glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE );
     // glfwWindowHint( GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE );
@@ -253,7 +263,6 @@ int main( int argc, char** argv )
     glfwSetKeyCallback( window, glfwKeyCallback );
     log_info( "key input event initialized" );
 
-
     // ------------------------------------------------------------ ogg test
 
     const char* file_name = "D:/c/amiffy3d/audio/1000.ogg";
@@ -277,7 +286,6 @@ int main( int argc, char** argv )
     file_right_channel.ptr  = output + 1;
     file_right_channel.end  = file_right_channel.ptr + num_samples * num_channels;
     file_right_channel.step = 2;
-
 
     // ------------------------------------------------------------ end ogg test
 

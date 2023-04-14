@@ -29,7 +29,7 @@ set(AMIFFY_SOURCE
     audio_client.c
     lua_bind.h
     lua_bind.c
-)
+        lua_print_stack.h lua_print_stack.c)
 
 # add_executable(AMIFFY3D ${AMIFFY_SOURCE} ${GLAD_GL} ${ICON})
 
