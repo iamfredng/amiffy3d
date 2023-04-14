@@ -1,7 +1,15 @@
 #define GLAD_GL_IMPLEMENTATION
 #include <glad/gl.h>
+
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
+
+#ifdef _WIN32
+#    include <Windows.h>
+#endif
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define NK_INCLUDE_FIXED_TYPES
 #define NK_INCLUDE_STANDARD_IO
@@ -13,28 +21,17 @@
 #define NK_IMPLEMENTATION
 #define NK_GLFW_GL3_IMPLEMENTATION
 #define NK_KEYSTATE_BASED_INPUT
-#include <nuklear/nuklear.h>
-#include <nuklear/nuklear_glfw_gl3.h>
-
+#include "amiffy.h"
+#include "audio_client.h"
+#include "lua_bind.h"
 #include <log.h>
-#include <stb_vorbis.h>
-
 #include <lua/lapi.h>
 #include <lua/lauxlib.h>
 #include <lua/lua.h>
 #include <lua/lualib.h>
-
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#ifdef _WIN32
-#    include <Windows.h>
-#endif
-
-#include "amiffy.h"
-#include "audio_client.h"
-#include "lua_bind.h"
+#include <nuklear/nuklear.h>
+#include <nuklear/nuklear_glfw_gl3.h>
+#include <stb_vorbis.h>
 
 static bool           quick = false;
 static lua_State*     lua_state;
@@ -44,6 +41,44 @@ struct nk_font_atlas* atlas;
 struct nk_colorf      bg;
 struct nk_glfw        glfw = { 0 };
 
+static bool reload_lua = false;
+
+void hotreload_lua()
+{
+    luaL_dostring(lua_state, "_G['amiffy_init'] = reload('init'); _G['init'] = amiffy_init.init; _G['update'] = amiffy_init.update");
+
+    lua_getglobal( lua_state, "init" );
+    int rvl = lua_pcall( lua_state, 0, 0, 0 );
+    if ( rvl != 0 ) {
+        log_error( "reload init 失败, %d", rvl );
+        log_error( "%s", lua_tostring( lua_state, -1 ) );
+        exit( EXIT_FAILURE );
+    }
+}
+
+void init_lua()
+{
+    // 设置基础函数和nk的窗体常量
+    luaL_dostring(lua_state, "function reload(module) package.loaded[module] = nil; return require(module); end; _G['NK_FLAG'] = function(inv) return 1 << inv end; NK_WINDOW_BORDER = NK_FLAG(0);NK_WINDOW_MOVABLE = NK_FLAG(1);NK_WINDOW_SCALABLE = NK_FLAG(2);NK_WINDOW_CLOSABLE = NK_FLAG(3);NK_WINDOW_MINIMIZABLE = NK_FLAG(4);NK_WINDOW_NO_SCROLLBAR = NK_FLAG(5);NK_WINDOW_TITLE = NK_FLAG(6);NK_WINDOW_SCROLL_AUTO_HIDE = NK_FLAG(7);NK_WINDOW_BACKGROUND = NK_FLAG(8);NK_WINDOW_SCALE_LEFT = NK_FLAG(9);NK_WINDOW_NO_INPUT = NK_FLAG(10); ");
+
+    // 初始化脚本
+    int rvl = luaL_dostring( lua_state, "_G['amiffy_init'] = require('init'); _G['init'] = amiffy_init.init; _G['update'] = amiffy_init.update" );
+    if ( rvl != 0 ) {
+        log_error( "init 失败, %d", rvl );
+        log_error( "%s", lua_tostring( lua_state, -1 ) );
+        exit( EXIT_FAILURE );
+    }
+
+    // 加载init.lua的初始化函数
+    lua_getglobal( lua_state, "init" );
+    rvl = lua_pcall( lua_state, 0, 0, 0 );
+    if ( rvl != 0 ) {
+        log_error( "init 失败, %d", rvl );
+        log_error( "%s", lua_tostring( lua_state, -1 ) );
+        exit( EXIT_FAILURE );
+    }
+}
+
 void setup_lua()
 {
     lua_state = luaL_newstate();
@@ -52,32 +87,37 @@ void setup_lua()
 
     bind_amiffy_modules( lua_state );
 
-    /// 嵌入一些简单的辅助函数, 方便不需要在init.lua中定义或额外写定义文件
-    int rvl = luaL_dostring( lua_state, "_G['NK_FLAG'] = function(inv) return 1 << inv end;" );
+    lua_newtable(lua_state);
+    lua_pushnumber(lua_state, 0);
+    lua_setfield(lua_state, -2, "width");
+    lua_pushnumber(lua_state, 0);
+    lua_setfield(lua_state, -2, "height");
+    lua_setglobal(lua_state, "window");
 
-    rvl = luaL_dofile( lua_state, "lua/init.lua" );
-    if ( rvl != 0 ) {
-        log_error( "dofile 失败, %d", rvl );
-        log_error( "%s", lua_tostring( lua_state, -1 ) );
-        exit( EXIT_FAILURE );
-    }
-
-    lua_getglobal( lua_state, "init" );
-    rvl = lua_pcall( lua_state, 0, 0, 0 );
-    if ( rvl != 0 ) {
-        log_error( "init 失败, %d", rvl );
-        log_error( "%s", lua_tostring( lua_state, -1 ) );
-        exit( EXIT_FAILURE );
-    }
-    // log_info( "lua 环境初始化完毕" );
-    // log_info( "lua 环境 lua环境初始化完毕" );
+    init_lua();
 }
 
-void setup_nk_font( struct nk_glfw* glfw, struct nk_context* nk )
+void lua_update_call( int width, int height )
+{
+    lua_getglobal(lua_state, "window");
+    lua_pushnumber(lua_state, width);
+    lua_setfield(lua_state, -2, "width");
+    lua_pushnumber(lua_state, height);
+    lua_setfield(lua_state, -2, "height");
+
+    lua_getglobal( lua_state, "update" );
+    int rvl = lua_pcall( lua_state, 0, 0, 0 );
+    if ( rvl != 0 ) {
+        log_error( "lua_update_call 失败, %d", rvl );
+        log_error( "%s", lua_tostring( lua_state, -1 ) );
+    }
+}
+
+void setup_nk_font( struct nk_glfw* glfw_, struct nk_context* nk_ )
 {
     log_info( "设置字体" );
 
-    nk_glfw3_font_stash_begin( glfw, &atlas );
+    nk_glfw3_font_stash_begin( glfw_, &atlas );
 
     struct nk_font_config conf = nk_font_config( FONT_SIZE );
     conf.range                 = nk_font_chinese_glyph_ranges();
@@ -86,36 +126,32 @@ void setup_nk_font( struct nk_glfw* glfw, struct nk_context* nk )
     conf.pixel_snap            = 0;
     struct nk_font* f          = nk_font_atlas_add_from_file( atlas, FONT_NAME, FONT_SIZE, &conf );
 
-    nk_glfw3_font_stash_end( glfw );
-    nk_style_set_font( nk, &f->handle );
+    nk_glfw3_font_stash_end( glfw_ );
+    nk_style_set_font( nk_, &f->handle );
 }
 
 void glfwKeyCallback( GLFWwindow* window, int key, int scancode, int action, int mods )
 {
-    log_debug( "key: %d scancode: %d action: %d mods: %d", key, scancode, action, mods );
+    // alt   = mod4
+    // shift = mod1
+    // ctrl  = mod2
+    // win   = mod8
+    // log_debug( "key: %d scancode: %d action: %d mods: %d", key, scancode, action, mods );
+    if ( key == 294 && action == 0 ) {
+        reload_lua = true;
+    }
 }
 
-void setup_log()
+static void setup_log()
 {
     log_set_level( 0 );
     log_set_quiet( 0 );
+
 
     log_fd = fopen( "./log_debug.txt", "ab" );
     log_add_fp( log_fd, LOG_DEBUG );
 
     log_info( "Amiffy Application is starting..............................." );
-}
-
-void lua_update_call( int width, int height )
-{
-    lua_getglobal( lua_state, "update" );
-    lua_pushnumber( lua_state, width );
-    lua_pushnumber( lua_state, height );
-    int rvl = lua_pcall( lua_state, 2, 0, 0 );
-    if ( rvl != 0 ) {
-        log_error( "lua_update_call 失败, %d", rvl );
-        log_error( "%s", lua_tostring( lua_state, -1 ) );
-    }
 }
 
 static void text_input( GLFWwindow* win, unsigned int codepoint )
@@ -147,7 +183,9 @@ void audio_write_callback( int num_samples, int num_areas, struct audio_area* ar
 {
     for ( int n = 0; n < num_areas; ++n ) {
         struct audio_area area = areas [n];
-        while ( area.ptr < area.end ) { *area.ptr++ = 0.0; }
+        while ( area.ptr < area.end ) {
+            *area.ptr++ = 0.0;
+        }
     }
 
     struct audio_area* in_l  = &file_left_channel;
@@ -165,12 +203,14 @@ inline float convert_sample( short sample )
     return (float) ( (double) sample / 32768.0 );
 }
 
-void convert_samples( int num_samples, short* input, float* output )
+void convert_samples( int num_samples, short* input_, float* output_ )
 {
-    short* in_ptr     = input;
-    short* in_ptr_end = input + num_samples;
-    float* out_ptr    = output;
-    while ( in_ptr < in_ptr_end ) { *out_ptr++ = convert_sample( *in_ptr++ ); }
+    short* in_ptr     = input_;
+    short* in_ptr_end = input_ + num_samples;
+    float* out_ptr    = output_;
+    while ( in_ptr < in_ptr_end ) {
+        *out_ptr++ = convert_sample( *in_ptr++ );
+    }
 }
 
 int main( int argc, char** argv )
@@ -191,7 +231,6 @@ int main( int argc, char** argv )
     glfwWindowHint( GLFW_SCALE_TO_MONITOR, GLFW_TRUE );
     glfwWindowHint( GLFW_WIN32_KEYBOARD_MENU, GLFW_TRUE );
     glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
-
 
     // 透明无边框窗体, 最好配合全屏
     // glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE );
@@ -224,7 +263,6 @@ int main( int argc, char** argv )
     glfwSetKeyCallback( window, glfwKeyCallback );
     log_info( "key input event initialized" );
 
-
     // ------------------------------------------------------------ ogg test
 
     const char* file_name = "D:/c/amiffy3d/audio/1000.ogg";
@@ -249,7 +287,6 @@ int main( int argc, char** argv )
     file_right_channel.end  = file_right_channel.ptr + num_samples * num_channels;
     file_right_channel.step = 2;
 
-
     // ------------------------------------------------------------ end ogg test
 
     init_audio_client( sample_rate, audio_read_callback, audio_write_callback );
@@ -272,23 +309,15 @@ int main( int argc, char** argv )
 
         glfwGetWindowSize( window, &width, &height );
 
-        lua_update_call( width, height );
-
-        // if ( nk_begin( nk,
-        //                "窗体",
-        //                nk_rect( 0.f, 0.f, 280, 220 ),
-        //                NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE |
-        //                    NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE ) ) {
-        //     nk_layout_row_dynamic( nk, 30, 4 );
-        //     if ( nk_button_label( nk, "最大化" ) ) glfwMaximizeWindow( window );
-        //     if ( nk_button_label( nk, "最小化" ) ) glfwIconifyWindow( window );
-        //     if ( nk_button_label( nk, "Restore" ) ) glfwRestoreWindow( window );
-        //     if ( nk_button_label( nk, "关闭" ) ) quick = true;
-        // }
-        // nk_end( nk );
+        if ( reload_lua ) {
+            reload_lua = false;
+            hotreload_lua();
+        }
+        else {
+            lua_update_call( width, height );
+        }
 
         glfwGetFramebufferSize( window, &width, &height );
-        // glfwGetWindowSize( window, &width, &height );
         glViewport( 0, 0, width, height );
         glClearColor( bg.r, bg.g, bg.b, bg.a );
         glClear( GL_COLOR_BUFFER_BIT );

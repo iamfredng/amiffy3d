@@ -1,5 +1,6 @@
 build/
 .cache/
+.idea/
 fonts/
 audio/
 amiffy3d.exe
@@ -7,3 +8,4 @@ amiffy3d.pdb
 log_debug.txt
 Debug/
 Release/
+cmake-build-debug/
