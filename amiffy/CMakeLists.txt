@@ -23,8 +23,14 @@ if (WIN32)
 endif ()
 
 set(AMIFFY_SOURCE
-        amiffy.h main.c audio_client.h audio_client.c
-        lua_bind.h lua_bind.c lua_print_stack.h lua_print_stack.c)
+        ${AMIFFY3D_SOURCE_DIR}/amiffy/amiffy.h
+        ${AMIFFY3D_SOURCE_DIR}/amiffy/main.c
+        ${AMIFFY3D_SOURCE_DIR}/amiffy/audio_client.h
+        ${AMIFFY3D_SOURCE_DIR}/amiffy/audio_client.c
+        ${AMIFFY3D_SOURCE_DIR}/amiffy/lua_bind.h
+        ${AMIFFY3D_SOURCE_DIR}/amiffy/lua_bind.c
+        ${AMIFFY3D_SOURCE_DIR}/amiffy/lua_print_stack.h
+        ${AMIFFY3D_SOURCE_DIR}/amiffy/lua_print_stack.c)
 
 # add_executable(AMIFFY3D ${AMIFFY_SOURCE} ${GLAD_GL} ${ICON})
 

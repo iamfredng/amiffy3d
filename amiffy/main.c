@@ -50,6 +50,31 @@ static struct audio_area file_right_channel;
 
 static bool reload_lua = false;
 
+static int msghandler( lua_State* L )
+{
+    const char* msg = lua_tostring( L, 1 );
+    if ( msg == NULL ) {                            /* is error object not a string? */
+        if ( luaL_callmeta( L, 1, "__tostring" ) && /* does it have a metamethod */
+             lua_type( L, -1 ) == LUA_TSTRING )     /* that produces a string? */
+            return 1;                               /* that is the message */
+        else
+            msg = lua_pushfstring( L, "(error object is a %s value)", luaL_typename( L, 1 ) );
+    }
+    luaL_traceback( L, L, msg, 1 ); /* append a standard traceback */
+    return 1;                       /* return the traceback */
+}
+
+static int docall( lua_State* L, int narg, int nres )
+{
+    int status;
+    int base = lua_gettop( L ) - narg;  /* function index */
+    lua_pushcfunction( L, msghandler ); /* push message handler */
+    lua_insert( L, base );              /* put it under function and args */
+    status = lua_pcall( L, narg, nres, base );
+    lua_remove( L, base );              /* remove message handler from the stack */
+    return status;
+}
+
 void hotreload_lua()
 {
     luaL_dostring( lua_state,
@@ -57,11 +82,11 @@ void hotreload_lua()
                    "_G['update'] = amiffy_init.update" );
 
     lua_getglobal( lua_state, "init" );
-    int rvl = lua_pcall( lua_state, 0, 0, 0 );
+    int rvl = docall( lua_state, 0, 0 );
     if ( rvl != 0 ) {
         log_error( "reload init 失败, %d", rvl );
         log_error( "%s", lua_tostring( lua_state, -1 ) );
-//        exit( EXIT_FAILURE );
+        //        exit( EXIT_FAILURE );
     }
 }
 
@@ -97,11 +122,11 @@ void init_lua()
 
     // 加载init.lua的初始化函数
     lua_getglobal( lua_state, "init" );
-    rvl = lua_pcall( lua_state, 0, 0, 0 );
+    rvl = docall( lua_state, 0, 0 );
     if ( rvl != 0 ) {
         log_error( "init 失败, %d", rvl );
         log_error( "%s", lua_tostring( lua_state, -1 ) );
-//        exit( EXIT_FAILURE );
+        //        exit( EXIT_FAILURE );
     }
 }
 
@@ -132,7 +157,7 @@ void lua_update_call( int width, int height )
     lua_setfield( lua_state, -2, "height" );
 
     lua_getglobal( lua_state, "update" );
-    int rvl = lua_pcall( lua_state, 0, 0, 0 );
+    int rvl = docall( lua_state, 0, 0 );
     if ( rvl != 0 ) {
         log_error( "lua_update_call 失败, %d", rvl );
         log_error( "%s", lua_tostring( lua_state, -1 ) );
