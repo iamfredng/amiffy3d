@@ -5761,6 +5761,8 @@ template<typename T> struct nk_alignof{struct Big {T x; char c;}; enum {
 #define NK_BUFFER_DEFAULT_INITIAL_SIZE (4*1024)
 #endif
 
+
+
 /* standard library headers */
 #ifdef NK_INCLUDE_DEFAULT_ALLOCATOR
 #include <stdlib.h> /* malloc, free */
@@ -5772,8 +5774,9 @@ template<typename T> struct nk_alignof{struct Big {T x; char c;}; enum {
 #include <stdarg.h> /* valist, va_start, va_end, ... */
 #endif
 #ifndef NK_ASSERT
-#include <assert.h>
-#define NK_ASSERT(expr) assert(expr)
+  //#include <assert.h>
+//#define NK_ASSERT(expr) assert(expr) // 断言会导致程序跑abort, 对于用lua来处理的ui库, abort是无法接受的
+#define NK_ASSERT(expr) (!!(expr)) || (printf("assert break!!!! %d, %s \n", __LINE__, __FILE__))
 #endif
 
 #define NK_DEFAULT (-1)
