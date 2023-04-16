@@ -82,7 +82,6 @@ static GLuint image_load( const char* filename )
 
 void init_ui_style()
 {
-    glEnable( GL_TEXTURE_2D );
     ui_media.skin = image_load( AMIFFY_DEFAULT_SKIN_PATH );
     ui_media.window =
         nk_sub9slice_id( ui_media.skin, 512, 512, nk_rect( 0, 23, 127, 104 ), 4, 4, 4, 4 );
@@ -189,7 +188,7 @@ void glfwKeyCallback( GLFWwindow* window, int key, int scancode, int action, int
 void open_ui_module()
 {
     glfwSetErrorCallback( error_callback );
-
+    glEnable( GL_TEXTURE_2D );
     if ( !glfwInit() ) {
         log_error( "initialization window system failed\n" );
         exit( EXIT_FAILURE );
@@ -277,7 +276,7 @@ void begin_ui_event_loop()
         glfwGetFramebufferSize( window, &width, &height );
 
         if ( frame_handler != NULL ) {
-//            frame_handler( width, height );
+            frame_handler( width, height );
         }
 
     }

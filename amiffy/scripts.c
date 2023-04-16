@@ -9,6 +9,8 @@
 
 static lua_State* lua_state;
 
+static bool reload_lua = false;
+
 static int c_log_debug( lua_State* L )
 {
     const char* str = lua_tostring( L, 1 );
@@ -82,29 +84,27 @@ static int docall( lua_State* L, int narg, int nres )
     return status;
 }
 
-//
-// void hotreload_lua()
-//{
-//    luaL_dostring( lua_state,
-//                   "_G['amiffy'] = reload('init'); _G['amiffy_init'] = amiffy.init; "
-//                   "_G['amiffy_update'] = amiffy.update" );
-//
-//    lua_getglobal( lua_state, "amiffy_init" );
-//    int rvl = docall( lua_state, 0, 0 );
-//    if ( rvl != 0 ) {
-//        log_error( "reload init 失败, %d", rvl );
-//        log_error( "%s", lua_tostring( lua_state, -1 ) );
-//    }
-//}
-//
+void hotreload_lua()
+{
+    luaL_dostring( lua_state,
+                   "_G['amiffy'] = reload('init'); _G['amiffy_init'] = amiffy.init; "
+                   "_G['amiffy_update'] = amiffy.update" );
+
+    lua_getglobal( lua_state, "amiffy_init" );
+    int rvl = docall( lua_state, 0, 0 );
+    if ( rvl != 0 ) {
+        log_error( "reload init 失败, %d", rvl );
+        log_error( "%s", lua_tostring( lua_state, -1 ) );
+    }
+}
+
 static void init_script_env()
 {
     // 设置基础函数和nk的窗体常量
     luaL_dostring(
         lua_state,
         "package.cpath=package.cpath .. ';./clib/?.dll;./clib/?.so'"
-        "function reload(module) package.loaded[module] = nil; return require(module); end;"
-);
+        "function reload(module) package.loaded[module] = nil; return require(module); end;" );
 
     // 初始化脚本
     int rvl = luaL_dostring( lua_state,
@@ -134,7 +134,7 @@ static void open_script_module( double width, double height )
     lua_setfield( lua_state, -2, "height" );
     lua_setglobal( lua_state, "window" );
 
-    log_debug("lua_state: %p", lua_state);
+    log_debug( "lua_state: %p", lua_state );
 }
 
 static void close_script_module()
@@ -143,8 +143,20 @@ static void close_script_module()
     log_info( "Script module closed" );
 }
 
+static void reload_script_module()
+{
+    reload_lua = true;
+}
+
 void update_script_frame( double width, double height )
 {
+    if ( reload_lua ) {
+        reload_lua = false;
+        hotreload_lua();
+
+        return;
+    }
+
     lua_getglobal( lua_state, "window" );
     lua_pushnumber( lua_state, width );
     lua_setfield( lua_state, -2, "width" );

@@ -12,6 +12,8 @@ void init_script_env();
 
 void update_script_frame( double width, double height );
 
+void reload_script_module();
+
 void close_script_module();
 
 #endif
