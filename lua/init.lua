@@ -82,6 +82,7 @@ return {
     init = function()
         log.info('window ' .. window.width .. 'x' .. window.height)
         local r, g, b = utils.hex2rgb(app_ui_data.background_color)
+        --imgui.change_bg_color(0, 0, 0, 0) -- 透明背景
         imgui.change_bg_color(r / 255, g / 255, b / 255, 1)
         --log.info('剪切板内容: ' .. p.get_clipboard_content())
         --log.info('cpath ' .. package.cpath)

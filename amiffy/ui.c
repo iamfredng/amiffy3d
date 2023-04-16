@@ -188,7 +188,7 @@ void glfwKeyCallback( GLFWwindow* window, int key, int scancode, int action, int
 void open_ui_module()
 {
     glfwSetErrorCallback( error_callback );
-    glEnable( GL_TEXTURE_2D );
+
     if ( !glfwInit() ) {
         log_error( "initialization window system failed\n" );
         exit( EXIT_FAILURE );
@@ -203,10 +203,10 @@ void open_ui_module()
     glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
 
     // 透明无边框窗体, 最好配合全屏
-    // glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE );
-    // glfwWindowHint( GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE );
-    // glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
-    //     glfwWindowHint( GLFW_DECORATED, GLFW_FALSE );
+    //    glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE );
+    //    glfwWindowHint( GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE );
+    //    glfwWindowHint( GLFW_RESIZABLE, GLFW_FALSE );
+    //    glfwWindowHint( GLFW_DECORATED, GLFW_FALSE );
 
     window = glfwCreateWindow(
         AMIFFY_DEFAULT_WINDOW_WIDTH, AMIFFY_DEFAULT_WINDOW_HEIGHT, "Window 窗体", NULL, NULL );
@@ -228,6 +228,8 @@ void open_ui_module()
     nk = nk_glfw3_init( &glfw, window, NK_GLFW3_INSTALL_CALLBACKS );
 
     setup_nk_font( &glfw, nk );
+
+    glEnable( GL_TEXTURE_2D );
 
     init_ui_style();
 
@@ -278,7 +280,6 @@ void begin_ui_event_loop()
         if ( frame_handler != NULL ) {
             frame_handler( width, height );
         }
-
     }
 }
 
