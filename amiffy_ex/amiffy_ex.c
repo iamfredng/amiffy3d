@@ -3,7 +3,6 @@
 // #include <lua/lualib.h>
 
 #include <stdio.h>
-
 #include <windows.h>
 
 #ifdef __cplusplus
@@ -42,6 +41,8 @@ static int get_clipboard_content(lua_State *L) {
   lua_pushstring(L, pbuf);
   return 1;
 }
+
+static lua_State * lua_state;
 
 static luaL_Reg l[] = {{"get_clipboard_content", get_clipboard_content},
                        {NULL, NULL}};

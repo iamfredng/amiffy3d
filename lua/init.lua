@@ -7,7 +7,7 @@ local app_ui_data = {
     background_color = '#7d94b5',
     top_left_dock = { show = true, height = 60, flags = NK_WINDOW_NO_SCROLLBAR },
     left_dock = { show = true, x = 0, y = 140, width = 160, height = 400, id = 'LD',
-                  flags = NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER },
+                  flags = NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_BORDER | NK_WINDOW_TITLE | NK_WINDOW_SCALABLE | NK_WINDOW_MOVABLE },
 }
 
 local app_capabilities = {
@@ -83,7 +83,7 @@ return {
         log.info('window ' .. window.width .. 'x' .. window.height)
         local r, g, b = utils.hex2rgb(app_ui_data.background_color)
         imgui.change_bg_color(r / 255, g / 255, b / 255, 1)
-        log.info('剪切板内容: ' .. p.get_clipboard_content())
+        --log.info('剪切板内容: ' .. p.get_clipboard_content())
         --log.info('cpath ' .. package.cpath)
     end,
     update = function()

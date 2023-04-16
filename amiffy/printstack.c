@@ -1,7 +1,14 @@
-#include "lua_print_stack.h"
+// printstack.c
+//
 
-#include <log.h>
+#include "printstack.h"
+
+#include <lua/lauxlib.h>
+
+#include <assert.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <string.h>
 
 static void print_item(lua_State *L, int i, int as_key);
 
@@ -36,7 +43,7 @@ static int is_seq(lua_State *L, int i) {
 }
 
 static void print_seq(lua_State *L, int i) {
-    log_debug("{");
+    printf("{");
 
     int k;
     for (k = 1;; ++k) {
@@ -44,7 +51,7 @@ static void print_seq(lua_State *L, int i) {
         lua_rawgeti(L, i, k);
         // stack = [.., t[k]]
         if (lua_isnil(L, -1)) break;
-        if (k > 1) log_debug(", ");
+        if (k > 1) printf(", ");
         print_item(L, -1, 0);  // 0 --> as_key
         lua_pop(L, 1);
         // stack = [..]
@@ -53,7 +60,7 @@ static void print_seq(lua_State *L, int i) {
     lua_pop(L, 1);
     // stack = [..]
 
-    log_debug("}");
+    printf("}");
 }
 
 static void print_table(lua_State *L, int i) {
@@ -68,17 +75,17 @@ static void print_table(lua_State *L, int i) {
         lua_pushnil(L);
         // stack = [.., nil]
         while (lua_next(L, i)) {
-            log_debug("%s", prefix);
+            printf("%s", prefix);
             // stack = [.., key, value]
             print_item(L, -2, 1);  // 1 --> as_key
-            log_debug(" = ");
+            printf(" = ");
             print_item(L, -1, 0);  // 0 --> as_key
             lua_pop(L, 1);  // So the last-used key is on top.
                                       // stack = [.., key]
             prefix = ", ";
         }
         // stack = [..]
-        log_debug("}");
+        printf("}");
     }
 }
 
@@ -97,7 +104,7 @@ static char *get_fn_string(lua_State *L, int i) {
     while (lua_next(L, -2)) {
         // stack = [.., _G, key, value]
         if (lua_rawequal(L, i, -1)) {
-            log_debug("function:%s", lua_tostring(L, -2));
+            snprintf(fn_name, 1024, "function:%s", lua_tostring(L, -2));
             lua_pop(L, 3);
             // stack = [..]
             return fn_name;
@@ -110,7 +117,7 @@ static char *get_fn_string(lua_State *L, int i) {
     // stack = [.., _G]
     lua_pop(L, 1);
     // stack = [..]
-    log_debug( "function:%p", lua_topointer(L, i));
+    snprintf(fn_name, 1024, "function:%p", lua_topointer(L, i));
     return fn_name;
 }
 
@@ -122,64 +129,64 @@ static void print_item(lua_State *L, int i, int as_key) {
     switch(ltype) {
 
     case LUA_TNIL:
-        log_debug("nil");  // This can't be a key, so we can ignore as_key here.
+        printf("nil");  // This can't be a key, so we can ignore as_key here.
         return;
 
     case LUA_TNUMBER:
-        log_debug("%s%g%s", first, lua_tonumber(L, i), last);
+        printf("%s%g%s", first, lua_tonumber(L, i), last);
         return;
 
     case LUA_TBOOLEAN:
-        log_debug("%s%s%s", first, lua_toboolean(L, i) ? "true" : "false", last);
+        printf("%s%s%s", first, lua_toboolean(L, i) ? "true" : "false", last);
         return;
 
     case LUA_TSTRING:
     {
         const char *s = lua_tostring(L, i);
         if (is_identifier(s) && as_key) {
-            log_debug("%s", s);
+            printf("%s", s);
         } else {
-            log_debug("%s'%s'%s", first, s, last);
+            printf("%s'%s'%s", first, s, last);
         }
     }
         return;
 
     case LUA_TTABLE:
-        log_debug("%s", first);
+        printf("%s", first);
         print_table(L, i);
-        log_debug("%s", last);
+        printf("%s", last);
         return;
 
     case LUA_TFUNCTION:
-        log_debug("%s%s%s", first, get_fn_string(L, i), last);
+        printf("%s%s%s", first, get_fn_string(L, i), last);
         return;
 
     case LUA_TUSERDATA:
     case LUA_TLIGHTUSERDATA:
-        log_debug("%suserdata:", first);
+        printf("%suserdata:", first);
         break;
 
     case LUA_TTHREAD:
-        log_debug("%sthread:", first);
+        printf("%sthread:", first);
         break;
 
     default:
-        log_debug("<internal_error_in_print_stack_item!>");
+        printf("<internal_error_in_print_stack_item!>");
         return;
     }
 
     // If we reach here, then we've got a type that we print as a pointer.
-    log_debug("%p%s", lua_topointer(L, i), last);
+    printf("%p%s", lua_topointer(L, i), last);
 }
 
 void print_stack(lua_State *L) {
     int n = lua_gettop(L);
-    log_debug("stack:");
+    printf("stack:");
     int i;
     for (i = 1; i <= n; ++i) {
-        log_debug(" ");
+        printf(" ");
         print_item(L, i, 0);  // 0 --> as_key
     }
-    if (n == 0) log_debug(" <empty>");
-    log_debug("\n");
+    if (n == 0) printf(" <empty>");
+    printf("\n");
 }

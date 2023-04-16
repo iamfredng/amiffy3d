@@ -1,6 +1,9 @@
 ﻿#include "lua_bind.h"
-
 #include <nuklear/nuklear.h>
+#include <lua/lauxlib.h>
+#include "amiffy.h"
+#include "log.h"
+#include "lua_print_stack.h"
 
 static int c_log_debug( lua_State* L )
 {
@@ -32,7 +35,6 @@ static int c_log_info( lua_State* L )
 
 static int imgui_end_window( lua_State* L )
 {
-    UNUSED( L );
     nk_end( nk );
     return 0;
 }

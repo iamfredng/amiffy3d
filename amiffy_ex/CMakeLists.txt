@@ -1,5 +1,5 @@
 add_library(AMIFFY_EX MODULE
-        amiffy_ex.c)
+        amiffy_ex.c ${AMIFFY3D_SOURCE_DIR}/amiffy/amiffy.h )
 
 target_link_libraries(AMIFFY_EX
 #        PRIVATE logc

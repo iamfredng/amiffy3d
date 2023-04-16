@@ -1,5 +1,7 @@
 set(stb_SOURCE_DIR "${CMAKE_SOURCE_DIR}/3rd/nothings")
 
+include_directories(${stb_SOURCE_DIR}/include)
+
 set(stb_SOURCES
     "${stb_SOURCE_DIR}/src/stb_vorbis.c"
 )
