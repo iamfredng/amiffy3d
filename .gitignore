@@ -10,3 +10,4 @@ log_debug.txt
 Debug/
 Release/
 cmake-build-debug/
+dist/
