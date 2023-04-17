@@ -221,7 +221,7 @@ void open_ui_module()
     glfwSetScrollCallback( window, scroll_input );
 
     gladLoadGL( glfwGetProcAddress );
-    glfwSwapInterval( 1 );
+    glfwSwapInterval( 0 );
     glfwSetWindowAttrib( window, GLFW_TRANSPARENT_FRAMEBUFFER, 1 );
     log_info( "window system initialized" );
 
