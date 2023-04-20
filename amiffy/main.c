@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+//#include <irrKlang.h>
 #include "audio.h"
 #include "scripts.h"
 #include "ui.h"
@@ -47,7 +47,7 @@ int main( int argc, char** argv )
 
     open_ui_module();
 
-    open_audio_module();
+//    open_audio_module();
 
     open_script_module( AMIFFY_DEFAULT_WINDOW_WIDTH, AMIFFY_DEFAULT_WINDOW_HEIGHT );
 
@@ -68,7 +68,7 @@ int main( int argc, char** argv )
 
     close_script_module();
 
-    close_audio_module();
+//    close_audio_module();
 
     close_log_module();
 

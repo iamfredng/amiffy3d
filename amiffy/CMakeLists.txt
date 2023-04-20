@@ -1,29 +1,31 @@
 link_libraries(
-        glfw logc lua soundio stb
+        logc lua
+        stb
+        "${CMAKE_SOURCE_DIR}/3rd/irrKlang/irrKlang.lib"
 )
 
 include_directories(
-        "${AMIFFY3D_SOURCE_DIR}/3rd/glfw3/include"
-        "${AMIFFY3D_SOURCE_DIR}/3rd/nuklear/include"
         "${AMIFFY3D_SOURCE_DIR}/3rd/logc/include"
         "${AMIFFY3D_SOURCE_DIR}/3rd/lua/include"
-        "${AMIFFY3D_SOURCE_DIR}/3rd/soundio/include"
         "${AMIFFY3D_SOURCE_DIR}/3rd/nothings/include"
+        "${AMIFFY3D_SOURCE_DIR}/3rd/irrKlang/include"
 )
 
 if (MSVC OR CMAKE_C_SIMULATE_ID STREQUAL "MSVC")
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     add_definitions(-DSOUNDIO_ON_MSVC)
 endif ()
-
-set(GLAD_GL "${AMIFFY3D_SOURCE_DIR}/3rd/glfw3/include/glad/gl.h")
+set(IMGUI_LIB imgui::imgui)
+#set(GLAD_GL "${AMIFFY3D_SOURCE_DIR}/3rd/glfw3/include/glad/gl.h")
 
 if (WIN32)
     set(ICON glfw.rc)
 endif ()
 
 set(AMIFFY_SOURCE
-        amiffy.h main.c
+        amiffy.h main.cpp
+        imgui_impl_dx11.h imgui_impl_dx11.cpp
+        imgui_impl_win32.h imgui_impl_win32.cpp
         images.h images.c
         #        audio_client.h
         #        audio_client.c
@@ -40,10 +42,17 @@ set(AMIFFY_SOURCE
 
 add_executable(AMIFFY3D WIN32 MACOSX_BUNDLE ${AMIFFY_SOURCE} ${GLAD_GL} ${ICON})
 
+#target_link_libraries(AMIFFY3D irrKlang)
+
 set_target_properties(AMIFFY3D PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/../"
         CXX_STANDARD 20
         C_STANDARD 99)
+
+set(CLANG TRUE)
+
+find_package(DirectX11 REQUIRED)
+find_package(imgui CONFIG REQUIRED)
 
 if (MSVC)
     # Tell MSVC to use main instead of WinMain

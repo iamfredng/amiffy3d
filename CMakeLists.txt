@@ -1,15 +1,8 @@
 cmake_minimum_required(VERSION 3.4...3.26 FATAL_ERROR)
 
-project(AMIFFY3D VERSION 0.1.1 LANGUAGES C)
+project(AMIFFY3D VERSION 0.1.1 LANGUAGES C CXX)
 
-# if (POLICY CMP65001)
-#     cmake_policy(SET CMP65001 NEW)
-# endif()
-
-# if (POLICY CMP0069)
-#     cmake_policy(SET CMP0069 NEW)
-# endif()
-
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 # set(CMAKE_BUILD_TYPE Release)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -51,10 +44,11 @@ set(GLFW_VERSION 3.4.0)
 #                                  VERSION ${GLFW_VERSION}
 #                                  COMPATIBILITY SameMajorVersion)
 
-add_subdirectory(3rd/glfw3)
+#add_subdirectory(3rd/glfw3)
 add_subdirectory(3rd/logc)
 add_subdirectory(3rd/lua)
-add_subdirectory(3rd/soundio)
+#add_subdirectory(3rd/soundio)
 add_subdirectory(3rd/nothings)
+#add_subdirectory(3rd/irrklang)
 add_subdirectory(amiffy_ex)
 add_subdirectory(amiffy)

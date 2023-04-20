@@ -36,7 +36,6 @@ static struct SoundIo*          soundio;
 float* output;
 short* input;
 
-
 static void ( *write_sample )( char* ptr, double sample );
 
 static void write_sample_s16ne( char* ptr, double sample )
