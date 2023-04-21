@@ -1,7 +1,6 @@
 link_libraries(
         logc lua
         stb
-        "${CMAKE_SOURCE_DIR}/3rd/irrKlang/irrKlang.lib"
 )
 
 include_directories(
@@ -13,10 +12,8 @@ include_directories(
 
 if (MSVC OR CMAKE_C_SIMULATE_ID STREQUAL "MSVC")
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-    add_definitions(-DSOUNDIO_ON_MSVC)
+#    add_definitions(-DSOUNDIO_ON_MSVC)
 endif ()
-set(IMGUI_LIB imgui::imgui)
-#set(GLAD_GL "${AMIFFY3D_SOURCE_DIR}/3rd/glfw3/include/glad/gl.h")
 
 if (WIN32)
     set(ICON glfw.rc)
@@ -34,25 +31,31 @@ set(AMIFFY_SOURCE
         #        lua_print_stack.h
         #        lua_print_stack.c stb_img.c stb_img.h
         scripts.h scripts.c
-        audio.h audio.c
-        ui.h ui.c
+        audio.h audio.cpp
+        ui.h ui.cpp
         printstack.h printstack.c)
 
-# add_executable(AMIFFY3D ${AMIFFY_SOURCE} ${GLAD_GL} ${ICON})
+# add_executable(AMIFFY3D ${AMIFFY_SOURCE} ${ICON})
 
-add_executable(AMIFFY3D WIN32 MACOSX_BUNDLE ${AMIFFY_SOURCE} ${GLAD_GL} ${ICON})
+add_executable(AMIFFY3D WIN32 MACOSX_BUNDLE ${AMIFFY_SOURCE} ${ICON} )
 
-#target_link_libraries(AMIFFY3D irrKlang)
+set(CLANG TRUE)
+set(IMGUI_LIB imgui::imgui)
+find_package(DirectX11 REQUIRED)
+find_package(imgui CONFIG REQUIRED)
+
+target_link_libraries(AMIFFY3D
+        PRIVATE "${CMAKE_SOURCE_DIR}/3rd/irrKlang/irrKlang.lib"
+#        PRIVATE ${irrk}
+        PRIVATE ${IMGUI_LIB}
+        PRIVATE ${DirectX11_LIBRARY})
+
+
 
 set_target_properties(AMIFFY3D PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/../"
         CXX_STANDARD 20
         C_STANDARD 99)
-
-set(CLANG TRUE)
-
-find_package(DirectX11 REQUIRED)
-find_package(imgui CONFIG REQUIRED)
 
 if (MSVC)
     # Tell MSVC to use main instead of WinMain

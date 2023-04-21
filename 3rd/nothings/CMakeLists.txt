@@ -8,5 +8,5 @@ set(stb_SOURCES
 
 add_library(stb STATIC ${stb_SOURCES})
 
-set_target_properties(soundio PROPERTIES
+set_target_properties(stb PROPERTIES
     C_STANDARD 99)
