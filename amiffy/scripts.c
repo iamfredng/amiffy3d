@@ -1,11 +1,15 @@
 #include "amiffy.h"
 
+#include <stdbool.h>
+
 #include "printstack.h"
 #include "scripts.h"
 
 #include <lua/lauxlib.h>
 #include <lua/lua.h>
 #include <lua/lualib.h>
+
+#include <log.h>
 
 static lua_State* lua_state;
 

@@ -29,7 +29,7 @@
 #define LOGC_COMMON_EXPORT __declspec(dllimport)
 #endif
 #else
-#define LOGC_COMMON_EXPORT
+#define LOGC_COMMON_EXPORT extern
 #endif
 
 #define MAX_CALLBACKS 32

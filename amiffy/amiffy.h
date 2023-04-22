@@ -1,8 +1,6 @@
 ﻿#ifndef AMIFFY3D_H_
 #define AMIFFY3D_H_
 
-
-#include <log.h>
 #include <lua/lua.h>
 
 #define AMIFFY_DEFAULT_SCRIPT_NAME "init"

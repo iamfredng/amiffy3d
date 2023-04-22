@@ -10,10 +10,6 @@ add_library(lua ${LIBRARY_BUILD_TYPE}
 
 target_include_directories(lua PRIVATE "include/lua")
 
-if (MSVC OR CMAKE_C_SIMULATE_ID STREQUAL "MSVC")
-    target_compile_definitions(logc PRIVATE _CRT_SECURE_NO_WARNINGS)
-endif ()
-
 set_target_properties(lua PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/dist"
         C_STANDARD 99)

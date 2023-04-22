@@ -4,14 +4,15 @@
 extern "C" {
 #include "amiffy.h"
 #include "scripts.h"
-#include "ui.h"
+#include <log.h>
 }
+#include "ui.h"
 static FILE* log_fd;
 
 static void open_log_module()
 {
     log_set_level( 0 );
-    log_set_quiet( 0 );
+    log_set_quiet( false );
 
     log_fd = fopen( AMIFFY_DEFAULT_LOG_FILE_PATH, "ab" );
     log_add_fp( log_fd, AMIFFY_DEFAULT_LOG_LEVEL );
@@ -42,7 +43,7 @@ static void key_callback( int key, int scancode, int action, int mods )
     }
 }
 
-int main( int argc, char** argv )
+int main( int sargc, char** argv )
 {
     open_log_module();
     log_info( "Amiffy Application is starting..............................." );

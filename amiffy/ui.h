@@ -1,10 +1,6 @@
 #ifndef AMIFFY_UI_H_
 #define AMIFFY_UI_H_
 
-#include "amiffy.h"
-
-#include <lua/lauxlib.h>
-
 typedef void ( *frame_update_handler )( double width, double height );
 typedef void ( *window_key_callback )( int key, int scancode, int action, int mods );
 
