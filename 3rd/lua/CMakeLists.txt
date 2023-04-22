@@ -15,7 +15,7 @@ if (MSVC OR CMAKE_C_SIMULATE_ID STREQUAL "MSVC")
 endif ()
 
 set_target_properties(lua PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/dist"
         C_STANDARD 99)
 
 target_compile_definitions(lua PUBLIC LUA_BUILD_AS_DLL)

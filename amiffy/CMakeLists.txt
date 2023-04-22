@@ -42,7 +42,7 @@ target_link_libraries(AMIFFY3D
         PRIVATE ${CMAKE_SOURCE_DIR}/3rd/irrklang/irrKlang.lib)
 
 set_target_properties(AMIFFY3D PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/../"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/dist"
         CXX_STANDARD 20
         C_STANDARD 99)
 
@@ -57,3 +57,39 @@ elseif (CMAKE_C_SIMULATE_ID STREQUAL "MSVC")
 endif ()
 
 target_compile_definitions(AMIFFY3D PRIVATE UNICODE _UNICODE)
+
+add_custom_command(
+        TARGET AMIFFY3D POST_BUILD
+
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/3rd/irrklang/irrKlang.dll
+        ${CMAKE_SOURCE_DIR}/dist/irrKlang.dll
+
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/3rd/irrklang/ikpFlac.dll
+        ${CMAKE_SOURCE_DIR}/dist/ikpFlac.dll
+
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/3rd/irrklang/ikpMP3.dll
+        ${CMAKE_SOURCE_DIR}/dist/ikpMP3.dll
+
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/lua
+        ${CMAKE_SOURCE_DIR}/dist/lua
+
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/clib
+        ${CMAKE_SOURCE_DIR}/dist/clib
+
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/fonts/harmony.ttf
+        ${CMAKE_SOURCE_DIR}/dist/fonts/harmony.ttf
+
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/audio
+        ${CMAKE_SOURCE_DIR}/dist/audio
+
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/assets
+        ${CMAKE_SOURCE_DIR}/dist/assets
+)
