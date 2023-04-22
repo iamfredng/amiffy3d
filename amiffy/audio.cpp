@@ -1,4 +1,5 @@
 #include "audio.h"
+#include <irrKlang.h>
 
 using namespace irrklang;
 
@@ -12,7 +13,6 @@ void open_audio_module()
 
 void close_audio_module()
 {
-
     engine->drop();
 }
 

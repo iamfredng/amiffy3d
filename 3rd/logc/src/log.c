@@ -22,6 +22,16 @@
 
 #include "log.h"
 
+#if defined(_WIN32)
+#if defined(logc_EXPORTS)
+#define LOGC_COMMON_EXPORT __declspec(dllexport)
+#else
+#define LOGC_COMMON_EXPORT __declspec(dllimport)
+#endif
+#else
+#define LOGC_COMMON_EXPORT
+#endif
+
 #define MAX_CALLBACKS 32
 
 typedef struct {
@@ -90,11 +100,13 @@ void log_set_lock(log_LockFn fn, void *udata) {
   L.lock = fn;
   L.udata = udata;
 }
-
+LOGC_COMMON_EXPORT
 void log_set_level(int level) { L.level = level; }
 
+LOGC_COMMON_EXPORT
 void log_set_quiet(bool enable) { L.quiet = enable; }
 
+LOGC_COMMON_EXPORT
 int log_add_callback(log_LogFn fn, void *udata, int level) {
   for (int i = 0; i < MAX_CALLBACKS; i++) {
     if (!L.callbacks[i].fn) {
@@ -105,6 +117,7 @@ int log_add_callback(log_LogFn fn, void *udata, int level) {
   return -1;
 }
 
+LOGC_COMMON_EXPORT
 int log_add_fp(FILE *fp, int level) {
   return log_add_callback(file_callback, fp, level);
 }
@@ -117,6 +130,7 @@ static void init_event(log_Event *ev, void *udata) {
   ev->udata = udata;
 }
 
+LOGC_COMMON_EXPORT
 void log_log(int level, const char *file, int line, const char *fmt, ...) {
   log_Event ev = {
       .fmt = fmt,

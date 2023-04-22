@@ -1,7 +1,7 @@
 ﻿local imgui = require('imgui')
 local log = require('log')
 local utils = require('utils')
-local p = require('amiffy_ex')
+--local p = require('amiffy_ex')
 
 local app_ui_data = {
     background_color = '#7d94b5',

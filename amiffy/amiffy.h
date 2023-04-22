@@ -1,6 +1,7 @@
 ﻿#ifndef AMIFFY3D_H_
 #define AMIFFY3D_H_
 
+
 #include <log.h>
 #include <lua/lua.h>
 
@@ -19,8 +20,8 @@
 
 #define AMIFFY_DEFAULT_SKIN_PATH "./assets/skins/gwen.png"
 
-//#define HIGHSPEED_EVENT_FLAG
- #define LOWSPEED_EVENT_FLAG
+// #define HIGHSPEED_EVENT_FLAG
+#define LOWSPEED_EVENT_FLAG
 
 extern struct nk_context* nk;
 extern struct nk_colorf   bg;

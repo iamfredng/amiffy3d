@@ -1,19 +1,22 @@
 link_libraries(
-        logc lua
-        stb
+        glfw logc lua stb
 )
 
 include_directories(
+        "${AMIFFY3D_SOURCE_DIR}/3rd/glfw3/include"
+        "${AMIFFY3D_SOURCE_DIR}/3rd/nuklear/include"
         "${AMIFFY3D_SOURCE_DIR}/3rd/logc/include"
         "${AMIFFY3D_SOURCE_DIR}/3rd/lua/include"
+        "${AMIFFY3D_SOURCE_DIR}/3rd/irrklang/include"
         "${AMIFFY3D_SOURCE_DIR}/3rd/nothings/include"
-        "${AMIFFY3D_SOURCE_DIR}/3rd/irrKlang/include"
 )
 
 if (MSVC OR CMAKE_C_SIMULATE_ID STREQUAL "MSVC")
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-#    add_definitions(-DSOUNDIO_ON_MSVC)
+    add_definitions(-DSOUNDIO_ON_MSVC)
 endif ()
+
+set(GLAD_GL "${AMIFFY3D_SOURCE_DIR}/3rd/glfw3/include/glad/gl.h")
 
 if (WIN32)
     set(ICON glfw.rc)
@@ -21,36 +24,22 @@ endif ()
 
 set(AMIFFY_SOURCE
         amiffy.h main.cpp
-        imgui_impl_dx11.h imgui_impl_dx11.cpp
-        imgui_impl_win32.h imgui_impl_win32.cpp
         images.h images.c
-        #        audio_client.h
-        #        audio_client.c
         #        lua_bind.h
         #        lua_bind.c
         #        lua_print_stack.h
         #        lua_print_stack.c stb_img.c stb_img.h
         scripts.h scripts.c
         audio.h audio.cpp
-        ui.h ui.cpp
+        ui.h ui.c
         printstack.h printstack.c)
 
-# add_executable(AMIFFY3D ${AMIFFY_SOURCE} ${ICON})
+# add_executable(AMIFFY3D ${AMIFFY_SOURCE} ${GLAD_GL} ${ICON})
 
-add_executable(AMIFFY3D WIN32 MACOSX_BUNDLE ${AMIFFY_SOURCE} ${ICON} )
-
-set(CLANG TRUE)
-set(IMGUI_LIB imgui::imgui)
-find_package(DirectX11 REQUIRED)
-find_package(imgui CONFIG REQUIRED)
+add_executable(AMIFFY3D WIN32 MACOSX_BUNDLE ${AMIFFY_SOURCE} ${GLAD_GL} ${ICON})
 
 target_link_libraries(AMIFFY3D
-        PRIVATE "${CMAKE_SOURCE_DIR}/3rd/irrKlang/irrKlang.lib"
-#        PRIVATE ${irrk}
-        PRIVATE ${IMGUI_LIB}
-        PRIVATE ${DirectX11_LIBRARY})
-
-
+        PRIVATE ${CMAKE_SOURCE_DIR}/3rd/irrklang/irrKlang.lib)
 
 set_target_properties(AMIFFY3D PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/../"

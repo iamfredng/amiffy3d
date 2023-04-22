@@ -3,8 +3,8 @@
 #include <irrKlang.h>
 
 void open_audio_module();
-
 void close_audio_module();
+void play_audio( const char* fileName, bool loop );
 
 void play_audio( const char* fileName, bool loop );
 

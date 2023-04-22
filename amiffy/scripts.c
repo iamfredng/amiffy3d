@@ -110,7 +110,10 @@ static void init_script_env()
     int rvl = luaL_dostring( lua_state,
                              "_G['amiffy'] = require('init'); _G['amiffy_init'] = amiffy.init; "
                              "_G['amiffy_update'] = amiffy.update" );
-
+    if ( rvl != 0 ) {
+        log_error( "init 2失败, %d", rvl );
+        log_error( "%s", lua_tostring( lua_state, -1 ) );
+    }
     // 加载init.lua的初始化函数
     lua_getglobal( lua_state, "amiffy_init" );
     rvl = docall( lua_state, 0, 0 );
