@@ -1,4 +1,4 @@
-﻿--local imgui = require('imgui')
+﻿local imgui = require('imgui')
 local log = require('log')
 local utils = require('utils')
 --local p = require('amiffy_ex')
@@ -44,17 +44,17 @@ local app_capabilities = {
 local app_ui = {
     showLeftDock = function(self)
         if (app_ui_data.left_dock.show) then
-            --if (imgui.begin_window(app_ui_data.left_dock.id, app_ui_data.left_dock.x, app_ui_data.left_dock.y,
-            --        app_ui_data.left_dock.width, app_ui_data.left_dock.height, app_ui_data.left_dock.flags)) then
-            --    --local total = #(app_data.top_left_dock.buttons)
-            --    for k, v in ipairs(app_capabilities.left_dock.buttons) do
-            --        imgui.layout_row_dynamic(30, 1)
-            --        if (imgui.button(v.label)) then
-            --            v.callback(app_capabilities.top_left_dock.buttons)
-            --        end
-            --    end
-            --end
-            --imgui.end_window()
+            if (imgui.begin_window(app_ui_data.left_dock.id, app_ui_data.left_dock.x, app_ui_data.left_dock.y,
+                    app_ui_data.left_dock.width, app_ui_data.left_dock.height, app_ui_data.left_dock.flags)) then
+                for k, v in ipairs(app_capabilities.left_dock.buttons) do
+                    --        imgui.layout_row_dynamic(30, 1)
+                    if (imgui.button(v.label)) then
+                        v.callback(app_capabilities.top_left_dock.buttons)
+                        --log.info("button is clicked")
+                    end
+                end
+            end
+            imgui.end_window()
         end
     end,
 

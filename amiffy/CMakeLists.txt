@@ -1,5 +1,4 @@
-link_libraries(logc lua stb
-)
+link_libraries(logc lua stb)
 
 include_directories(
         "${AMIFFY3D_SOURCE_DIR}/3rd/logc/include"
@@ -28,7 +27,7 @@ set(AMIFFY_SOURCE
         printstack.h printstack.c
         imgui_impl_win32.h imgui_impl_win32.cpp
         imgui_impl_dx11.h imgui_impl_dx11.cpp
-        )
+        uicomponents.h uicomponents.cpp)
 
 # add_executable(AMIFFY3D ${AMIFFY_SOURCE} ${ICON})
 

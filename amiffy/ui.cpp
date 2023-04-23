@@ -11,8 +11,12 @@
 extern "C" {
 #include "amiffy.h"
 #include <log.h>
-}
+#include <lua/lauxlib.h>
 #include <lua/lua.h>
+#include <lua/lualib.h>
+#include "uicomponents.h"
+}
+
 
 // Data
 static ID3D11Device*           g_pd3dDevice           = nullptr;
@@ -20,20 +24,35 @@ static ID3D11DeviceContext*    g_pd3dDeviceContext    = nullptr;
 static IDXGISwapChain*         g_pSwapChain           = nullptr;
 static ID3D11RenderTargetView* g_mainRenderTargetView = nullptr;
 
-static bool        show_demo_window    = false;
-static bool        show_another_window = false;
-static ImVec4      clear_color         = ImVec4( 0.45f, 0.55f, 0.60f, 1.00f );
+static ImVec4      clear_color = ImVec4( 0.45f, 0.55f, 0.60f, 1.00f );
 static WNDCLASSEXW wc;
 static HWND        hwnd;
-//static ImGuiIO&     io =0;
+static bool        done;
 
-static bool done = false;
+static frame_update_handler _frame_update_handler;
+static window_key_callback  _window_key_callback;
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler( HWND hWnd, UINT msg, WPARAM wParam,
                                                               LPARAM lParam );
 
+CHAR get_char( WPARAM wparam )
+{
+    CHAR a = NULL;
+    for ( char ch = 'a'; ch <= 'z'; ch++ ) {
+        if ( wparam == ch ) {
+            a = ch;
+        }
+    }
+    for ( char ch = 'A'; ch <= 'Z'; ch++ ) {
+        if ( wparam == ch ) {
+            a = ch;
+        }
+    }
+    return a;
+}
+
 // Forward declarations of helper functions
-void CleanupRenderTarget()
+static void Win32CleanupRenderTarget()
 {
     if ( g_mainRenderTargetView ) {
         g_mainRenderTargetView->Release();
@@ -41,7 +60,7 @@ void CleanupRenderTarget()
     }
 }
 
-void CreateRenderTarget()
+static void Win32CreateRenderTarget()
 {
     ID3D11Texture2D* pBackBuffer;
     g_pSwapChain->GetBuffer( 0, IID_PPV_ARGS( &pBackBuffer ) );
@@ -49,7 +68,7 @@ void CreateRenderTarget()
     pBackBuffer->Release();
 }
 
-bool CreateDeviceD3D( HWND hWnd )
+static bool Win32CreateDeviceD3D( HWND hWnd )
 {
     // Setup swap chain
     DXGI_SWAP_CHAIN_DESC sd;
@@ -103,13 +122,13 @@ bool CreateDeviceD3D( HWND hWnd )
                                              &g_pd3dDeviceContext );
     if ( res != S_OK ) return false;
 
-    CreateRenderTarget();
+    Win32CreateRenderTarget();
     return true;
 }
 
-void CleanupDeviceD3D()
+static void Win32CleanupDeviceD3D()
 {
-    CleanupRenderTarget();
+    Win32CleanupRenderTarget();
     if ( g_pSwapChain ) {
         g_pSwapChain->Release();
         g_pSwapChain = nullptr;
@@ -131,10 +150,10 @@ LRESULT WINAPI WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
     switch ( msg ) {
     case WM_SIZE:
         if ( g_pd3dDevice != nullptr && wParam != SIZE_MINIMIZED ) {
-            CleanupRenderTarget();
+            Win32CleanupRenderTarget();
             g_pSwapChain->ResizeBuffers(
                 0, (UINT) LOWORD( lParam ), (UINT) HIWORD( lParam ), DXGI_FORMAT_UNKNOWN, 0 );
-            CreateRenderTarget();
+            Win32CreateRenderTarget();
         }
         return 0;
     case WM_SYSCOMMAND:
@@ -142,6 +161,18 @@ LRESULT WINAPI WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
             return 0;
         break;
     case WM_DESTROY: ::PostQuitMessage( 0 ); return 0;
+    case WM_KEYDOWN:
+        if ( _window_key_callback != nullptr ) {
+            // key_callback( int key, int scancode, int action, int mods )
+            _window_key_callback( get_char( wParam ), 0, 1, 0 );
+        }
+        break;
+    case WM_KEYUP:
+        if ( _window_key_callback != nullptr ) {
+            // key_callback( int key, int scancode, int action, int mods )
+            _window_key_callback( get_char( wParam ), 0, 0, 0 );
+        }
+        break;
     }
     return ::DefWindowProcW( hWnd, msg, wParam, lParam );
 }
@@ -176,8 +207,8 @@ void open_ui_module()
                             nullptr );
 
     // Initialize Direct3D
-    if ( !CreateDeviceD3D( hwnd ) ) {
-        CleanupDeviceD3D();
+    if ( !Win32CreateDeviceD3D( hwnd ) ) {
+        Win32CleanupDeviceD3D();
         ::UnregisterClassW( wc.lpszClassName, wc.hInstance );
         log_error( "初始化d3d失败" );
         return;
@@ -192,7 +223,9 @@ void open_ui_module()
     ImGui::CreateContext();
 
     ImGuiIO& io = ImGui::GetIO();
-    (void)io;
+    (void) io;
+    io.Fonts->AddFontFromFileTTF(
+        "./fonts/harmony.ttf", 14, nullptr, io.Fonts->GetGlyphRangesChineseSimplifiedCommon() );
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;   // Enable Keyboard Controls
 
     ImGui::StyleColorsLight();
@@ -220,54 +253,15 @@ void begin_ui_event_loop()
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You
-        // can browse its code to learn more about Dear ImGui!).
-        if ( show_demo_window ) ImGui::ShowDemoWindow( &show_demo_window );
+        RECT rect;
+        GetClientRect( hwnd, &rect );
+        int width  = rect.left - rect.right;
+        int height = rect.top - rect.bottom;
 
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a
-        // named window.
-        {
-            static float f       = 0.0f;
-            static int   counter = 0;
+        ImGui::ShowDemoWindow();
 
-            ImGui::Begin(
-                "Hello, world!" );   // Create a window called "Hello, world!" and append into it.
-
-            ImGui::Text( "This is some useful text." );   // Display some text (you can use a format
-                                                          // strings too)
-            ImGui::Checkbox(
-                "Demo Window",
-                &show_demo_window );   // Edit bools storing our window open/close state
-            ImGui::Checkbox( "Another Window", &show_another_window );
-
-            ImGui::SliderFloat2(
-                "float", &f, 0.0f, 1.0f );   // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3( "clear color",
-                               (float*) &clear_color );   // Edit 3 floats representing a color
-
-            if ( ImGui::Button( "Button" ) )   // Buttons return true when clicked (most widgets
-                                               // return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text( "counter = %d", counter );
-
-            ImGuiIO& io = ImGui::GetIO();
-
-            ImGui::Text( "Application average %.3f ms/frame (%.1f FPS)",
-                         1000.0f / io.Framerate,
-                         io.Framerate );
-            ImGui::End();
-        }
-
-        // 3. Show another simple window.
-        if ( show_another_window ) {
-            ImGui::Begin( "Another Window",
-                          &show_another_window );   // Pass a pointer to our bool variable (the
-                                                    // window will have a closing button that will
-                                                    // clear the bool when clicked)
-            ImGui::Text( "Hello from another window!" );
-            if ( ImGui::Button( "Close Me" ) ) show_another_window = false;
-            ImGui::End();
+        if ( nullptr != _frame_update_handler ) {
+            _frame_update_handler( width, height );
         }
 
         // Rendering
@@ -291,11 +285,26 @@ void abort_ui_event_loop()
     done = false;
 }
 
-void register_ui_window_key_callback( window_key_callback ) {}
+void register_ui_window_key_callback( window_key_callback callback )
+{
+    _window_key_callback = callback;
+}
 
-void register_ui_frame_update_handler( frame_update_handler ) {}
+void register_ui_frame_update_handler( frame_update_handler handler )
+{
+    _frame_update_handler = handler;
+}
 
-void install_ui_script_module() {}
+
+void install_ui_script_module()
+{
+    lua_getglobal( lua_state, "package" );
+    lua_getfield( lua_state, -1, "preload" );
+
+    lua_pushcfunction( lua_state, luaopen_imgui );
+    lua_setfield( lua_state, -2, "imgui" );
+    lua_pop( lua_state, 2 );
+}
 
 void init_ui_env()
 {
@@ -330,7 +339,7 @@ void close_ui_module()
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
 
-    CleanupDeviceD3D();
+    Win32CleanupDeviceD3D();
     ::DestroyWindow( hwnd );
     ::UnregisterClassW( wc.lpszClassName, wc.hInstance );
 }
