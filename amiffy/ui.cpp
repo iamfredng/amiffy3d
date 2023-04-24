@@ -9,7 +9,7 @@
 #include <imgui.h>
 
 extern "C" {
-#include "amiffy.h"
+#include "amiffyconf.h"
 #include "uicomponents.h"
 #include <log.h>
 #include <lua/lauxlib.h>
@@ -30,7 +30,9 @@ static HWND        hwnd;
 static bool        done;
 
 static frame_update_handler _frame_update_handler;
-static window_key_callback  _window_key_callback;
+
+static Amiffy::Amiffy* _amiffy;
+// static Amiffy
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler( HWND hWnd, UINT msg, WPARAM wParam,
                                                               LPARAM lParam );
@@ -164,15 +166,15 @@ LRESULT WINAPI WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
         break;
     case WM_DESTROY: ::PostQuitMessage( 0 ); return 0;
     case WM_KEYDOWN:
-        if ( _window_key_callback != nullptr ) {
+        if ( _amiffy != nullptr ) {
             // key_callback( int key, int scancode, int action, int mods )
-            _window_key_callback( get_char( wParam ), 0, 1, 0 );
+            _amiffy->globalKeyCallback( get_char( wParam ), 0, 1, 0 );
         }
         break;
     case WM_KEYUP:
-        if ( _window_key_callback != nullptr ) {
+        if ( _amiffy != nullptr ) {
             // key_callback( int key, int scancode, int action, int mods )
-            _window_key_callback( get_char( wParam ), 0, 0, 0 );
+            _amiffy->globalKeyCallback( get_char( wParam ), 0, 0, 0 );
         }
         break;
     }
@@ -227,16 +229,17 @@ void open_ui_module()
 
     ImGuiIO& io = ImGui::GetIO();
     (void) io;
-    io.IniFilename = ""; // 禁用imgui.ini 窗口大小配置
+    io.IniFilename = "";   // 禁用imgui.ini 窗口大小配置
     io.Fonts->AddFontFromFileTTF( AMIFFY_DEFAULT_FONT_NAME,
                                   AMIFFY_DEFAULT_FONT_SIZE,
                                   nullptr,
                                   io.Fonts->GetGlyphRangesChineseSimplifiedCommon() );
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;   // Enable Keyboard Controls
-//    ImGui::StyleColorsLight();
-//    ImGui::StyleColorsClassic();
-//    ImGui::StyleColorsDark();
-    uiComponents.useLightTheme();
+
+                                                            //    ImGui::StyleColorsLight();
+    ImGui::StyleColorsClassic();
+    //    ImGui::StyleColorsDark();
+    //    uiComponents.useLightTheme();
 
     // Setup Platform/Renderer backends
     ImGui_ImplWin32_Init( hwnd );
@@ -268,26 +271,27 @@ void begin_ui_event_loop()
         int height = rect.top - rect.bottom;
 
         //        ImGui::ShowDemoWindow();
+
         bool isopen = true;
         ImGui::Begin( "window", &isopen, 0 );
-//        ImGui::SameLine();
-//        ImGui::BeginGroup();
+        //        ImGui::SameLine();
+        //        ImGui::BeginGroup();
 
-//        ImGui::SameLine();
+        //        ImGui::SameLine();
 
         ImGui::Button( "button 1" );
         ImGui::SameLine();
         ImGui::Button( "button 1" );
         ImGui::SameLine();
         ImGui::Button( "button 1" );
-//        ImGui::SameLine();
+        //        ImGui::SameLine();
         ImGui::Button( "button 1" );
-//        ImGui::SameLine();
+        //        ImGui::SameLine();
         ImGui::Button( "button 1" );
-//        ImGui::SameLine();
+        //        ImGui::SameLine();
         ImGui::Button( "button 1" );
 
-//        ImGui::EndGroup();
+        //        ImGui::EndGroup();
 
         ImGui::End();
 
@@ -316,9 +320,9 @@ void abort_ui_event_loop()
     done = false;
 }
 
-void register_ui_window_key_callback( window_key_callback callback )
+void register_ui_window_key_callback( Amiffy::Amiffy* amiffy )
 {
-    _window_key_callback = callback;
+    _amiffy = amiffy;
 }
 
 void register_ui_frame_update_handler( frame_update_handler handler )

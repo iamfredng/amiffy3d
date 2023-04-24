@@ -9,7 +9,6 @@
 
 namespace Amiffy {
 
-
 class AmiffyUIComponents
 {
 public:

@@ -1,4 +1,4 @@
-#include "amiffy.h"
+#include "amiffyconf.h"
 
 #include <stdbool.h>
 

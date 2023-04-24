@@ -1,56 +1,24 @@
-#include "audio.h"
 #include <iostream>
 
-extern "C" {
+#include "amiffyconf.h"
 #include "amiffy.h"
+#include "ui.h"
+
+extern "C" {
 #include "scripts.h"
 #include <log.h>
 }
-#include "ui.h"
-static FILE* log_fd;
 
-static void open_log_module()
+int main( int argc, char** argv )
 {
-    log_set_level( 0 );
-    log_set_quiet( false );
+    Amiffy::Amiffy amiffy;
 
-    log_fd = fopen( AMIFFY_DEFAULT_LOG_FILE_PATH, "ab" );
-    log_add_fp( log_fd, AMIFFY_DEFAULT_LOG_LEVEL );
-}
-
-static void close_log_module()
-{
-    log_info( "Log module closeing" );
-    fclose( log_fd );
-}
-
-static void key_callback( int key, int scancode, int action, int mods )
-{
-    // alt   = mod4
-    // shift = mod1
-    // ctrl  = mod2
-    // win   = mod8
-    log_debug( "key: %d scancode: %d action: %d mods: %d", key, scancode, action, mods );
-    if ( key == 294 && action == 0 ) {
-        //        reload_lua = true;
-        reload_script_module();
-    }
-    if ( key == 83 && action == 0 ) {
-        play_audio( "./audio/explosion.wav", false );
-    }
-    if ( key == 65 && action == 0 ) {
-        play_audio( "./audio/ophelia.mp3", false );
-    }
-}
-
-int main( int sargc, char** argv )
-{
-    open_log_module();
+    amiffy.openLogModule();
     log_info( "Amiffy Application is starting..............................." );
 
     open_ui_module();
 
-    open_audio_module();
+    amiffy.openAudioModule();
 
     open_script_module( AMIFFY_DEFAULT_WINDOW_WIDTH, AMIFFY_DEFAULT_WINDOW_HEIGHT );
 
@@ -63,7 +31,7 @@ int main( int sargc, char** argv )
     init_script_env();
 
     register_ui_frame_update_handler( update_script_frame );
-    register_ui_window_key_callback( key_callback );
+    register_ui_window_key_callback( &amiffy );
 
     begin_ui_event_loop();
 
@@ -71,9 +39,9 @@ int main( int sargc, char** argv )
 
     close_script_module();
 
-    close_audio_module();
+    amiffy.closeAudioModule();
 
-    close_log_module();
+    amiffy.closeLogModule();
 
     exit( EXIT_SUCCESS );
 }

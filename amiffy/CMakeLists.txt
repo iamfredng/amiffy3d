@@ -19,7 +19,7 @@ find_package(DirectX11 REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 
 set(AMIFFY_SOURCE
-        amiffy.h main.cpp
+        amiffyconf.h main.cpp
         images.h images.c
         scripts.h scripts.c
         audio.h audio.cpp
@@ -27,7 +27,8 @@ set(AMIFFY_SOURCE
         printstack.h printstack.c
         imgui_impl_win32.h imgui_impl_win32.cpp
         imgui_impl_dx11.h imgui_impl_dx11.cpp
-        uicomponents.h uicomponents.cpp)
+        uicomponents.h uicomponents.cpp
+        amiffy.cpp amiffy.h)
 
 # add_executable(AMIFFY3D ${AMIFFY_SOURCE} ${ICON})
 
