@@ -1,10 +1,7 @@
 {
   "name" : "amiffy3d",
-  "version-string" : "1.0.0",
-  "builtin-baseline" : "1e68748a7c6914642ed686b2e19c3d688bca150a",
-  "dependencies" : [ {
-    "name" : "imgui",
-    "version>=" : "1.89.4",
-    "$comment" : "    # this is heuristically generated, and may not be correct\n\n    find_package(imgui CONFIG REQUIRED)\n\n    target_link_libraries(main PRIVATE imgui::imgui)\n"
-  } ]
+  "dependencies" : [
+    "imgui",
+    "directxtk"
+  ]
 }

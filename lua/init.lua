@@ -47,10 +47,8 @@ local app_ui = {
             if (imgui.begin_window(app_ui_data.left_dock.id, app_ui_data.left_dock.x, app_ui_data.left_dock.y,
                     app_ui_data.left_dock.width, app_ui_data.left_dock.height, app_ui_data.left_dock.flags)) then
                 for k, v in ipairs(app_capabilities.left_dock.buttons) do
-                    --        imgui.layout_row_dynamic(30, 1)
                     if (imgui.button(v.label)) then
                         v.callback(app_capabilities.top_left_dock.buttons)
-                        --log.info("button is clicked")
                     end
                 end
             end
@@ -60,20 +58,20 @@ local app_ui = {
 
     showTopLeftDock = function(self)
         if (app_ui_data.top_left_dock.show) then
-            --if (imgui.begin_window('top_left_dock', 0, 0, window.width,
-            --        app_ui_data.top_left_dock.height,
-            --        app_ui_data.top_left_dock.flags
-            --)) then
+            if (imgui.begin_window('top_left_dock', 0, 0, window.width,
+                    app_ui_data.top_left_dock.height,
+                    app_ui_data.top_left_dock.flags
+            )) then
             --    local total = #(app_capabilities.top_left_dock.buttons)
             --    --log.debug('total:' .. tostring(total))
             --    imgui.layout_row_dynamic(app_ui_data.top_left_dock.height - 6, total)
-            --    for k, v in ipairs(app_capabilities.top_left_dock.buttons) do
-            --        if (imgui.button(v.label)) then
-            --            v.callback()
-            --        end
-            --    end
-            --end
-            --imgui.end_window()
+                for k, v in ipairs(app_capabilities.top_left_dock.buttons) do
+                    if (imgui.button(v.label)) then
+                        v.callback()
+                    end
+                end
+            end
+            imgui.end_window()
         end
     end,
 }

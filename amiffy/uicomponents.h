@@ -7,6 +7,16 @@
 
 #include <lua/lua.h>
 
-int luaopen_imgui( lua_State* L );
+namespace Amiffy {
 
+
+class AmiffyUIComponents
+{
+public:
+    void useLightTheme();
+    void useDarkThemem();
+    static int  luaopen_imgui( lua_State* L );
+};
+
+}   // namespace Amiffy
 #endif   // AMIFFY_UICOMPONENTS_H_

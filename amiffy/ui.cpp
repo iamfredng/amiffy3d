@@ -10,11 +10,11 @@
 
 extern "C" {
 #include "amiffy.h"
+#include "uicomponents.h"
 #include <log.h>
 #include <lua/lauxlib.h>
 #include <lua/lua.h>
 #include <lua/lualib.h>
-#include "uicomponents.h"
 }
 
 
@@ -34,6 +34,8 @@ static window_key_callback  _window_key_callback;
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler( HWND hWnd, UINT msg, WPARAM wParam,
                                                               LPARAM lParam );
+
+Amiffy::AmiffyUIComponents uiComponents;
 
 CHAR get_char( WPARAM wparam )
 {
@@ -181,6 +183,7 @@ void open_ui_module()
 {
     // Create application window
     ImGui_ImplWin32_EnableDpiAwareness();
+
     wc = { sizeof( wc ),
            CS_CLASSDC,
            WndProc,
@@ -224,11 +227,17 @@ void open_ui_module()
 
     ImGuiIO& io = ImGui::GetIO();
     (void) io;
-    io.Fonts->AddFontFromFileTTF(
-        "./fonts/harmony.ttf", 14, nullptr, io.Fonts->GetGlyphRangesChineseSimplifiedCommon() );
+    io.IniFilename = ""; // 禁用imgui.ini 窗口大小配置
+    io.Fonts->AddFontFromFileTTF( AMIFFY_DEFAULT_FONT_NAME,
+                                  AMIFFY_DEFAULT_FONT_SIZE,
+                                  nullptr,
+                                  io.Fonts->GetGlyphRangesChineseSimplifiedCommon() );
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;   // Enable Keyboard Controls
+//    ImGui::StyleColorsLight();
+//    ImGui::StyleColorsClassic();
+//    ImGui::StyleColorsDark();
+    uiComponents.useLightTheme();
 
-    ImGui::StyleColorsLight();
     // Setup Platform/Renderer backends
     ImGui_ImplWin32_Init( hwnd );
     ImGui_ImplDX11_Init( g_pd3dDevice, g_pd3dDeviceContext );
@@ -258,7 +267,29 @@ void begin_ui_event_loop()
         int width  = rect.left - rect.right;
         int height = rect.top - rect.bottom;
 
-        ImGui::ShowDemoWindow();
+        //        ImGui::ShowDemoWindow();
+        bool isopen = true;
+        ImGui::Begin( "window", &isopen, 0 );
+//        ImGui::SameLine();
+//        ImGui::BeginGroup();
+
+//        ImGui::SameLine();
+
+        ImGui::Button( "button 1" );
+        ImGui::SameLine();
+        ImGui::Button( "button 1" );
+        ImGui::SameLine();
+        ImGui::Button( "button 1" );
+//        ImGui::SameLine();
+        ImGui::Button( "button 1" );
+//        ImGui::SameLine();
+        ImGui::Button( "button 1" );
+//        ImGui::SameLine();
+        ImGui::Button( "button 1" );
+
+//        ImGui::EndGroup();
+
+        ImGui::End();
 
         if ( nullptr != _frame_update_handler ) {
             _frame_update_handler( width, height );
@@ -301,7 +332,7 @@ void install_ui_script_module()
     lua_getglobal( lua_state, "package" );
     lua_getfield( lua_state, -1, "preload" );
 
-    lua_pushcfunction( lua_state, luaopen_imgui );
+    lua_pushcfunction( lua_state, Amiffy::AmiffyUIComponents::luaopen_imgui );
     lua_setfield( lua_state, -2, "imgui" );
     lua_pop( lua_state, 2 );
 }

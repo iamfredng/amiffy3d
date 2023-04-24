@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.4...3.26 FATAL_ERROR)
 
 project(AMIFFY3D VERSION 0.1.1 LANGUAGES C CXX)
 
+include(CMakeDependentOption)
+
 # set(CMAKE_BUILD_TYPE Release)
 set(CLANG TRUE)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)

@@ -21,7 +21,5 @@
 // #define HIGHSPEED_EVENT_FLAG
 #define LOWSPEED_EVENT_FLAG
 
-extern struct nk_context* nk;
-extern struct nk_colorf   bg;
 extern lua_State*         lua_state;
 #endif
