@@ -12,7 +12,7 @@ if (MSVC OR CMAKE_C_SIMULATE_ID STREQUAL "MSVC")
 endif ()
 
 if (WIN32)
-    set(ICON glfw.rc)
+    set(ICON amiffy.rc)
 endif ()
 
 find_package(DirectX11 REQUIRED)

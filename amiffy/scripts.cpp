@@ -91,8 +91,6 @@ void AmiffyScriptModule::openScriptModule()
     auto lua_state = luaL_newstate();
     luaL_openlibs( lua_state );
 
-
-
     amiffy->luaVm = lua_state;
     vm            = lua_state;
     log_debug( "lua_state: %p", lua_state );

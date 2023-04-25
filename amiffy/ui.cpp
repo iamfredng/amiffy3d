@@ -6,9 +6,9 @@
 #include <imgui.h>
 
 #include "amiffyconf.h"
-#include "ui.h"
 #include "imgui_impl_dx11.h"
 #include "imgui_impl_win32.h"
+#include "ui.h"
 
 extern "C" {
 #include <log.h>
@@ -254,7 +254,7 @@ void AmiffyUI::openUIModule() const
                                   io.Fonts->GetGlyphRangesChineseSimplifiedCommon() );
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;   // Enable Keyboard Controls
 
-                                                            //    ImGui::StyleColorsLight();
+    //    ImGui::StyleColorsLight();
     ImGui::StyleColorsClassic();
     //    ImGui::StyleColorsDark();
     //    uiComponents.useLightTheme();
@@ -328,8 +328,9 @@ void AmiffyUI::beginUIEventLoop()
         uidata.deviceContext->ClearRenderTargetView( uidata.renderTargetView, bgcolor );
         ImGui_ImplDX11_RenderDrawData( ImGui::GetDrawData() );
 
-        uidata.swapChain->Present( 1, 0 );   // Present with vsync
-        //        swapChain->Present( 0, 0 );   // Present without vsync
+        uidata.swapChain->Present(
+            1, 0 );   // Present with vsync
+                      //        swapChain->Present( 0, 0 );   // Present without vsync
     }
 }
 
@@ -360,28 +361,6 @@ void AmiffyUI::initUIEnv()
     lua_pushnumber( lua_state, height );
     lua_setfield( lua_state, -2, "height" );
     lua_setglobal( lua_state, "window" );
-    //    lua_pushnumber( lua_state, 1 );
-    //    lua_setglobal( lua_state, "NK_WINDOW_BORDER" );
-    //    lua_pushnumber( lua_state, 2 );
-    //    lua_setglobal( lua_state, "NK_WINDOW_MOVABLE" );
-    //    lua_pushnumber( lua_state, 3 );
-    //    lua_setglobal( lua_state, "NK_WINDOW_SCALABLE" );
-    //    lua_pushnumber( lua_state, 4 );
-    //    lua_setglobal( lua_state, "NK_WINDOW_CLOSABLE" );
-    //    lua_pushnumber( lua_state, 5 );
-    //    lua_setglobal( lua_state, "NK_WINDOW_MINIMIZABLE" );
-    //    lua_pushnumber( lua_state, 6 );
-    //    lua_setglobal( lua_state, "NK_WINDOW_NO_SCROLLBAR" );
-    //    lua_pushnumber( lua_state, 7 );
-    //    lua_setglobal( lua_state, "NK_WINDOW_TITLE" );
-    //    lua_pushnumber( lua_state, 8 );
-    //    lua_setglobal( lua_state, "NK_WINDOW_SCROLL_AUTO_HIDE" );
-    //    lua_pushnumber( lua_state, 9 );
-    //    lua_setglobal( lua_state, "NK_WINDOW_BACKGROUND" );
-    //    lua_pushnumber( lua_state, 11 );
-    //    lua_setglobal( lua_state, "NK_WINDOW_SCALE_LEFT" );
-    //    lua_pushnumber( lua_state, 10 );
-    //    lua_setglobal( lua_state, "NK_WINDOW_NO_INPUT" );
 }
 
 void AmiffyUI::closeUIModule()
