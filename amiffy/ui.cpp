@@ -2,20 +2,17 @@
 // Created by iamfr on 2023/4/22.
 //
 
-#include "ui.h"
-#include "imgui_impl_dx11.h"
-#include "imgui_impl_win32.h"
 #include <d3d11.h>
 #include <imgui.h>
 
 #include "amiffyconf.h"
-#include "uicomponents.h"
+#include "ui.h"
+#include "imgui_impl_dx11.h"
+#include "imgui_impl_win32.h"
 
 extern "C" {
 #include <log.h>
-#include <lua/lauxlib.h>
 #include <lua/lua.h>
-#include <lua/lualib.h>
 }
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler( HWND hWnd, UINT msg, WPARAM wParam,
@@ -348,30 +345,21 @@ void AmiffyUI::abortUiEventLoop()
 {
     runing = false;
 }
-//
-// void register_ui_window_key_callback( Amiffy::Amiffy* amiffy )
-//{
-//    _amiffy = amiffy;
-//}
-//
-// void register_ui_frame_update_handler( frame_update_handler handler )
-//{
-//    _frame_update_handler = handler;
-//}
-
-
-// void AmiffyUI::install_ui_script_module()
-//{
-//     lua_getglobal( lua_state, "package" );
-//     lua_getfield( lua_state, -1, "preload" );
-//
-//     lua_pushcfunction( lua_state, Amiffy::AmiffyUIComponents::luaopen_imgui );
-//     lua_setfield( lua_state, -2, "imgui" );
-//     lua_pop( lua_state, 2 );
-// }
 
 void AmiffyUI::initUIEnv()
 {
+    RECT rect;
+    GetClientRect( uidata.hwnd, &rect );
+    int width  = rect.right - rect.left;
+    int height = rect.bottom - rect.top;
+
+    auto lua_state = (lua_State*) amiffy->luaVm;
+    lua_newtable( lua_state );
+    lua_pushnumber( lua_state, width );
+    lua_setfield( lua_state, -2, "width" );
+    lua_pushnumber( lua_state, height );
+    lua_setfield( lua_state, -2, "height" );
+    lua_setglobal( lua_state, "window" );
     //    lua_pushnumber( lua_state, 1 );
     //    lua_setglobal( lua_state, "NK_WINDOW_BORDER" );
     //    lua_pushnumber( lua_state, 2 );

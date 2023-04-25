@@ -91,12 +91,7 @@ void AmiffyScriptModule::openScriptModule()
     auto lua_state = luaL_newstate();
     luaL_openlibs( lua_state );
 
-    lua_newtable( lua_state );
-    lua_pushnumber( lua_state, 0 );
-    lua_setfield( lua_state, -2, "width" );
-    lua_pushnumber( lua_state, 0 );
-    lua_setfield( lua_state, -2, "height" );
-    lua_setglobal( lua_state, "window" );
+
 
     amiffy->luaVm = lua_state;
     vm            = lua_state;

@@ -94,7 +94,7 @@ local log = require('log')
 
 return {
     init = function()
-        log.debug('lua init is called')
+        log.debug('lua init is called' .. window.width .. " " .. window.height)
     end,
     update = function()
     end
