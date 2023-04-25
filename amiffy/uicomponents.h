@@ -5,7 +5,7 @@
 #ifndef AMIFFY_UICOMPONENTS_H_
 #define AMIFFY_UICOMPONENTS_H_
 
-#include <lua/lua.h>
+#include "ui.h"
 
 namespace Amiffy {
 
@@ -14,7 +14,13 @@ class AmiffyUIComponents
 public:
     void useLightTheme();
     void useDarkThemem();
-    static int  luaopen_imgui( lua_State* L );
+    void installUIComponents();
+    //    static int  luaopen_imgui( lua_State* L );
+    explicit AmiffyUIComponents(AmiffyUI* _ui);
+    ~AmiffyUIComponents();
+
+private:
+    AmiffyUI* ui;
 };
 
 }   // namespace Amiffy

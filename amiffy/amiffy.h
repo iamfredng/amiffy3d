@@ -2,7 +2,8 @@
 #define AMIFFY3D_H_
 
 #include <iostream>
-#include <irrKlang.h>
+
+#include "audio.h"
 
 namespace Amiffy {
 
@@ -23,10 +24,15 @@ public:
 
     void run();
 
+    Amiffy();
+    virtual ~Amiffy();
+
+public:
+    LuaVM        luaVm  = nullptr;
+
 private:
-    irrklang::ISoundEngine* engine;
-    LuaVM                  luaVm;
-    FILE*                   log_fd{};
+    AmiffyAudio* audio  = nullptr;
+    FILE*        log_fd = nullptr;
 };
 };   // namespace Amiffy
 

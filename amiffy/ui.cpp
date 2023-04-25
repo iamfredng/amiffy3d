@@ -8,36 +8,22 @@
 #include <d3d11.h>
 #include <imgui.h>
 
-extern "C" {
 #include "amiffyconf.h"
 #include "uicomponents.h"
+
+extern "C" {
 #include <log.h>
 #include <lua/lauxlib.h>
 #include <lua/lua.h>
 #include <lua/lualib.h>
 }
 
-
-// Data
-static ID3D11Device*           g_pd3dDevice           = nullptr;
-static ID3D11DeviceContext*    g_pd3dDeviceContext    = nullptr;
-static IDXGISwapChain*         g_pSwapChain           = nullptr;
-static ID3D11RenderTargetView* g_mainRenderTargetView = nullptr;
-
-static ImVec4      clear_color = ImVec4( 0.45f, 0.55f, 0.60f, 1.00f );
-static WNDCLASSEXW wc;
-static HWND        hwnd;
-static bool        done;
-
-static frame_update_handler _frame_update_handler;
-
-static Amiffy::Amiffy* _amiffy;
-// static Amiffy
-
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler( HWND hWnd, UINT msg, WPARAM wParam,
                                                               LPARAM lParam );
+namespace Amiffy {
 
-Amiffy::AmiffyUIComponents uiComponents;
+static AmiffyUIData* g_uidata;
+static AmiffyUI*     g_ui;
 
 CHAR get_char( WPARAM wparam )
 {
@@ -55,24 +41,74 @@ CHAR get_char( WPARAM wparam )
     return a;
 }
 
-// Forward declarations of helper functions
-static void Win32CleanupRenderTarget()
-{
-    if ( g_mainRenderTargetView ) {
-        g_mainRenderTargetView->Release();
-        g_mainRenderTargetView = nullptr;
-    }
-}
-
-static void Win32CreateRenderTarget()
+void Win32CreateRenderTarget( AmiffyUIData* data )
 {
     ID3D11Texture2D* pBackBuffer;
-    g_pSwapChain->GetBuffer( 0, IID_PPV_ARGS( &pBackBuffer ) );
-    g_pd3dDevice->CreateRenderTargetView( pBackBuffer, nullptr, &g_mainRenderTargetView );
+    data->swapChain->GetBuffer( 0, IID_PPV_ARGS( &pBackBuffer ) );
+    data->device->CreateRenderTargetView( pBackBuffer, nullptr, &data->renderTargetView );
     pBackBuffer->Release();
 }
 
-static bool Win32CreateDeviceD3D( HWND hWnd )
+void Win32CleanupRenderTarget( AmiffyUIData* data )
+{
+    if ( data->renderTargetView != nullptr ) {
+        data->renderTargetView->Release();
+        data->renderTargetView = nullptr;
+    }
+}
+
+void Win32CleanupDeviceD3D( AmiffyUIData* data )
+{
+    Win32CleanupRenderTarget( data );
+    if ( data->swapChain ) {
+        data->swapChain->Release();
+        data->swapChain = nullptr;
+    }
+    if ( data->deviceContext ) {
+        data->deviceContext->Release();
+        data->deviceContext = nullptr;
+    }
+    if ( data->device ) {
+        data->device->Release();
+        data->device = nullptr;
+    }
+}
+
+LRESULT WINAPI WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+    if ( ImGui_ImplWin32_WndProcHandler( hWnd, msg, wParam, lParam ) ) return true;
+
+    switch ( msg ) {
+    case WM_SIZE:
+        if ( g_uidata->device != nullptr && wParam != SIZE_MINIMIZED ) {
+            Win32CleanupRenderTarget( g_uidata );
+            g_uidata->swapChain->ResizeBuffers(
+                0, (UINT) LOWORD( lParam ), (UINT) HIWORD( lParam ), DXGI_FORMAT_UNKNOWN, 0 );
+            Win32CreateRenderTarget( g_uidata );
+        }
+        return 0;
+    case WM_SYSCOMMAND:
+        if ( ( wParam & 0xfff0 ) == SC_KEYMENU )   // Disable ALT application menu
+            return 0;
+        break;
+    case WM_DESTROY: ::PostQuitMessage( 0 ); return 0;
+    case WM_KEYDOWN:
+        if ( g_ui != nullptr ) {
+            // key_callback( int key, int scancode, int action, int mods )
+            g_ui->globalKeyCallback( get_char( wParam ), 0, 1, 0 );
+        }
+        break;
+    case WM_KEYUP:
+        if ( g_ui != nullptr ) {
+            // key_callback( int key, int scancode, int action, int mods )
+            g_ui->globalKeyCallback( get_char( wParam ), 0, 0, 0 );
+        }
+        break;
+    }
+    return ::DefWindowProcW( hWnd, msg, wParam, lParam );
+}
+
+bool Win32CreateDeviceD3D( AmiffyUIData* data )
 {
     // Setup swap chain
     DXGI_SWAP_CHAIN_DESC sd;
@@ -85,7 +121,7 @@ static bool Win32CreateDeviceD3D( HWND hWnd )
     sd.BufferDesc.RefreshRate.Denominator = 1;
     sd.Flags                              = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
     sd.BufferUsage                        = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    sd.OutputWindow                       = hWnd;
+    sd.OutputWindow                       = data->hwnd;
     sd.SampleDesc.Count                   = 1;
     sd.SampleDesc.Quality                 = 0;
     sd.Windowed                           = TRUE;
@@ -106,10 +142,10 @@ static bool Win32CreateDeviceD3D( HWND hWnd )
                                                  2,
                                                  D3D11_SDK_VERSION,
                                                  &sd,
-                                                 &g_pSwapChain,
-                                                 &g_pd3dDevice,
+                                                 &data->swapChain,
+                                                 &data->device,
                                                  &featureLevel,
-                                                 &g_pd3dDeviceContext );
+                                                 &data->deviceContext );
     if ( res == DXGI_ERROR_UNSUPPORTED )   // Try high-performance WARP software driver if hardware
                                            // is not available.
         res = D3D11CreateDeviceAndSwapChain( nullptr,
@@ -120,109 +156,94 @@ static bool Win32CreateDeviceD3D( HWND hWnd )
                                              2,
                                              D3D11_SDK_VERSION,
                                              &sd,
-                                             &g_pSwapChain,
-                                             &g_pd3dDevice,
+                                             &data->swapChain,
+                                             &data->device,
                                              &featureLevel,
-                                             &g_pd3dDeviceContext );
+                                             &data->deviceContext );
     if ( res != S_OK ) return false;
 
-    Win32CreateRenderTarget();
+    Win32CreateRenderTarget( data );
     return true;
 }
 
-static void Win32CleanupDeviceD3D()
+void AmiffyUI::globalKeyCallback( int key, int scancode, int action, int mods )
 {
-    Win32CleanupRenderTarget();
-    if ( g_pSwapChain ) {
-        g_pSwapChain->Release();
-        g_pSwapChain = nullptr;
+    for ( int i = 0; i < keyCallbackHandlers.size(); i++ ) {
+        auto item = keyCallbackHandlers [i];
+        if ( nullptr != item ) {
+            item( key, scancode, action, mods );
+        }
     }
-    if ( g_pd3dDeviceContext ) {
-        g_pd3dDeviceContext->Release();
-        g_pd3dDeviceContext = nullptr;
-    }
-    if ( g_pd3dDevice ) {
-        g_pd3dDevice->Release();
-        g_pd3dDevice = nullptr;
-    }
+    amiffy->globalKeyCallback( key, scancode, action, mods );
 }
 
-LRESULT WINAPI WndProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
+void AmiffyUI::createWindow()
 {
-    if ( ImGui_ImplWin32_WndProcHandler( hWnd, msg, wParam, lParam ) ) return true;
-
-    switch ( msg ) {
-    case WM_SIZE:
-        if ( g_pd3dDevice != nullptr && wParam != SIZE_MINIMIZED ) {
-            Win32CleanupRenderTarget();
-            g_pSwapChain->ResizeBuffers(
-                0, (UINT) LOWORD( lParam ), (UINT) HIWORD( lParam ), DXGI_FORMAT_UNKNOWN, 0 );
-            Win32CreateRenderTarget();
-        }
-        return 0;
-    case WM_SYSCOMMAND:
-        if ( ( wParam & 0xfff0 ) == SC_KEYMENU )   // Disable ALT application menu
-            return 0;
-        break;
-    case WM_DESTROY: ::PostQuitMessage( 0 ); return 0;
-    case WM_KEYDOWN:
-        if ( _amiffy != nullptr ) {
-            // key_callback( int key, int scancode, int action, int mods )
-            _amiffy->globalKeyCallback( get_char( wParam ), 0, 1, 0 );
-        }
-        break;
-    case WM_KEYUP:
-        if ( _amiffy != nullptr ) {
-            // key_callback( int key, int scancode, int action, int mods )
-            _amiffy->globalKeyCallback( get_char( wParam ), 0, 0, 0 );
-        }
-        break;
-    }
-    return ::DefWindowProcW( hWnd, msg, wParam, lParam );
-}
-
-void open_ui_module()
-{
-    // Create application window
     ImGui_ImplWin32_EnableDpiAwareness();
 
-    wc = { sizeof( wc ),
-           CS_CLASSDC,
-           WndProc,
-           0L,
-           0L,
-           GetModuleHandle( nullptr ),
-           nullptr,
-           nullptr,
-           nullptr,
-           nullptr,
-           L"ImGui Example",
-           nullptr };
-    ::RegisterClassExW( &wc );
-    hwnd = ::CreateWindowW( wc.lpszClassName,
-                            L"Dear ImGui DirectX11 Example",
-                            WS_OVERLAPPEDWINDOW,
-                            100,
-                            100,
-                            1280,
-                            800,
-                            nullptr,
-                            nullptr,
-                            wc.hInstance,
-                            nullptr );
+    WNDCLASSEXW wcex   = {};
+    wcex.cbSize        = sizeof( WNDCLASSEXW );
+    wcex.style         = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc   = WndProc;
+    wcex.hInstance     = GetModuleHandle( nullptr );
+    wcex.hIcon         = nullptr;
+    wcex.hIconSm       = nullptr;
+    wcex.hCursor       = nullptr;
+    wcex.hbrBackground = nullptr;
+    wcex.lpszClassName = L"Amiffy";
 
-    // Initialize Direct3D
-    if ( !Win32CreateDeviceD3D( hwnd ) ) {
-        Win32CleanupDeviceD3D();
-        ::UnregisterClassW( wc.lpszClassName, wc.hInstance );
+    ::RegisterClassExW( &wcex );
+    HWND hwnd = ::CreateWindowExW( 0,
+                                   wcex.lpszClassName,
+                                   L"Dear ImGui DirectX11 Example",
+                                   WS_OVERLAPPEDWINDOW,
+                                   100,
+                                   100,
+                                   1280,
+                                   800,
+                                   nullptr,
+                                   nullptr,
+                                   wcex.hInstance,
+                                   this );
+
+    uidata.wc   = &wcex;
+    uidata.hwnd = hwnd;
+
+    if ( !Win32CreateDeviceD3D( &uidata ) ) {
+        Win32CleanupDeviceD3D( &uidata );
+        ::UnregisterClassW( uidata.wc->lpszClassName, uidata.wc->hInstance );
         log_error( "初始化d3d失败" );
         return;
     }
 
-    // Show the window
-    ::ShowWindow( hwnd, SW_SHOWDEFAULT );
-    ::UpdateWindow( hwnd );
+    ::ShowWindow( uidata.hwnd, SW_SHOWDEFAULT );
+    ::UpdateWindow( uidata.hwnd );
+}
 
+void AmiffyUI::desotryWindow()
+{
+    Win32CleanupDeviceD3D( &uidata );
+    ::DestroyWindow( uidata.hwnd );
+    //    ::UnregisterClassExW( uidata.wc->lpszClassName, uidata.wc->hInstance );
+}
+
+AmiffyUI::AmiffyUI( Amiffy* _amiffy )
+{
+    amiffy   = _amiffy;
+    runing   = false;
+    uidata   = AmiffyUIData();
+    g_uidata = &uidata;
+    g_ui     = this;
+}
+
+AmiffyUI::~AmiffyUI()
+{
+    std::destroy( keyCallbackHandlers.begin(), keyCallbackHandlers.end() );
+    amiffy = nullptr;
+}
+
+void AmiffyUI::openUIModule() const
+{
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -242,23 +263,23 @@ void open_ui_module()
     //    uiComponents.useLightTheme();
 
     // Setup Platform/Renderer backends
-    ImGui_ImplWin32_Init( hwnd );
-    ImGui_ImplDX11_Init( g_pd3dDevice, g_pd3dDeviceContext );
+    ImGui_ImplWin32_Init( uidata.hwnd );
+    ImGui_ImplDX11_Init( uidata.device, uidata.deviceContext );
 }
 
-void begin_ui_event_loop()
+void AmiffyUI::beginUIEventLoop()
 {
     // Main loop
-    while ( !done ) {
+    while ( !runing ) {
         // Poll and handle messages (inputs, window resize, etc.)
         // See the WndProc() function below for our to dispatch events to the Win32 backend.
         MSG msg;
         while ( ::PeekMessage( &msg, nullptr, 0U, 0U, PM_REMOVE ) ) {
             ::TranslateMessage( &msg );
             ::DispatchMessage( &msg );
-            if ( msg.message == WM_QUIT ) done = true;
+            if ( msg.message == WM_QUIT ) runing = true;
         }
-        if ( done ) break;
+        if ( runing ) break;
 
         // Start the Dear ImGui frame
         ImGui_ImplDX11_NewFrame();
@@ -266,9 +287,9 @@ void begin_ui_event_loop()
         ImGui::NewFrame();
 
         RECT rect;
-        GetClientRect( hwnd, &rect );
-        int width  = rect.left - rect.right;
-        int height = rect.top - rect.bottom;
+        GetClientRect( uidata.hwnd, &rect );
+        int width  = rect.right - rect.left;
+        int height = rect.bottom - rect.top;
 
         //        ImGui::ShowDemoWindow();
 
@@ -295,86 +316,101 @@ void begin_ui_event_loop()
 
         ImGui::End();
 
-        if ( nullptr != _frame_update_handler ) {
-            _frame_update_handler( width, height );
+        if ( nullptr != frameHandler ) {
+            frameHandler( width, height );
         }
+
+        //        if ( nullptr != _frame_update_handler ) {
+        //            _frame_update_handler( width, height );
+        //        }
 
         // Rendering
         ImGui::Render();
-        const float clear_color_with_alpha [4] = { clear_color.x * clear_color.w,
-                                                   clear_color.y * clear_color.w,
-                                                   clear_color.z * clear_color.w,
-                                                   clear_color.w };
-        g_pd3dDeviceContext->OMSetRenderTargets( 1, &g_mainRenderTargetView, nullptr );
-        g_pd3dDeviceContext->ClearRenderTargetView( g_mainRenderTargetView,
-                                                    clear_color_with_alpha );
+        changeBgColor( 0, 0, 0, 1 );
+        uidata.deviceContext->OMSetRenderTargets( 1, &uidata.renderTargetView, nullptr );
+        uidata.deviceContext->ClearRenderTargetView( uidata.renderTargetView, bgcolor );
         ImGui_ImplDX11_RenderDrawData( ImGui::GetDrawData() );
 
-        g_pSwapChain->Present( 1, 0 );   // Present with vsync
-        //        g_pSwapChain->Present( 0, 0 );   // Present without vsync
+        uidata.swapChain->Present( 1, 0 );   // Present with vsync
+        //        swapChain->Present( 0, 0 );   // Present without vsync
     }
 }
 
-void abort_ui_event_loop()
+void AmiffyUI::changeBgColor( float r, float g, float b, float a )
 {
-    done = false;
+    bgcolor [0] = r;
+    bgcolor [1] = g;
+    bgcolor [2] = b;
+    bgcolor [3] = a;
 }
 
-void register_ui_window_key_callback( Amiffy::Amiffy* amiffy )
+void AmiffyUI::abortUiEventLoop()
 {
-    _amiffy = amiffy;
+    runing = false;
+}
+//
+// void register_ui_window_key_callback( Amiffy::Amiffy* amiffy )
+//{
+//    _amiffy = amiffy;
+//}
+//
+// void register_ui_frame_update_handler( frame_update_handler handler )
+//{
+//    _frame_update_handler = handler;
+//}
+
+
+// void AmiffyUI::install_ui_script_module()
+//{
+//     lua_getglobal( lua_state, "package" );
+//     lua_getfield( lua_state, -1, "preload" );
+//
+//     lua_pushcfunction( lua_state, Amiffy::AmiffyUIComponents::luaopen_imgui );
+//     lua_setfield( lua_state, -2, "imgui" );
+//     lua_pop( lua_state, 2 );
+// }
+
+void AmiffyUI::initUIEnv()
+{
+    //    lua_pushnumber( lua_state, 1 );
+    //    lua_setglobal( lua_state, "NK_WINDOW_BORDER" );
+    //    lua_pushnumber( lua_state, 2 );
+    //    lua_setglobal( lua_state, "NK_WINDOW_MOVABLE" );
+    //    lua_pushnumber( lua_state, 3 );
+    //    lua_setglobal( lua_state, "NK_WINDOW_SCALABLE" );
+    //    lua_pushnumber( lua_state, 4 );
+    //    lua_setglobal( lua_state, "NK_WINDOW_CLOSABLE" );
+    //    lua_pushnumber( lua_state, 5 );
+    //    lua_setglobal( lua_state, "NK_WINDOW_MINIMIZABLE" );
+    //    lua_pushnumber( lua_state, 6 );
+    //    lua_setglobal( lua_state, "NK_WINDOW_NO_SCROLLBAR" );
+    //    lua_pushnumber( lua_state, 7 );
+    //    lua_setglobal( lua_state, "NK_WINDOW_TITLE" );
+    //    lua_pushnumber( lua_state, 8 );
+    //    lua_setglobal( lua_state, "NK_WINDOW_SCROLL_AUTO_HIDE" );
+    //    lua_pushnumber( lua_state, 9 );
+    //    lua_setglobal( lua_state, "NK_WINDOW_BACKGROUND" );
+    //    lua_pushnumber( lua_state, 11 );
+    //    lua_setglobal( lua_state, "NK_WINDOW_SCALE_LEFT" );
+    //    lua_pushnumber( lua_state, 10 );
+    //    lua_setglobal( lua_state, "NK_WINDOW_NO_INPUT" );
 }
 
-void register_ui_frame_update_handler( frame_update_handler handler )
-{
-    _frame_update_handler = handler;
-}
-
-
-void install_ui_script_module()
-{
-    lua_getglobal( lua_state, "package" );
-    lua_getfield( lua_state, -1, "preload" );
-
-    lua_pushcfunction( lua_state, Amiffy::AmiffyUIComponents::luaopen_imgui );
-    lua_setfield( lua_state, -2, "imgui" );
-    lua_pop( lua_state, 2 );
-}
-
-void init_ui_env()
-{
-    lua_pushnumber( lua_state, 1 );
-    lua_setglobal( lua_state, "NK_WINDOW_BORDER" );
-    lua_pushnumber( lua_state, 2 );
-    lua_setglobal( lua_state, "NK_WINDOW_MOVABLE" );
-    lua_pushnumber( lua_state, 3 );
-    lua_setglobal( lua_state, "NK_WINDOW_SCALABLE" );
-    lua_pushnumber( lua_state, 4 );
-    lua_setglobal( lua_state, "NK_WINDOW_CLOSABLE" );
-    lua_pushnumber( lua_state, 5 );
-    lua_setglobal( lua_state, "NK_WINDOW_MINIMIZABLE" );
-    lua_pushnumber( lua_state, 6 );
-    lua_setglobal( lua_state, "NK_WINDOW_NO_SCROLLBAR" );
-    lua_pushnumber( lua_state, 7 );
-    lua_setglobal( lua_state, "NK_WINDOW_TITLE" );
-    lua_pushnumber( lua_state, 8 );
-    lua_setglobal( lua_state, "NK_WINDOW_SCROLL_AUTO_HIDE" );
-    lua_pushnumber( lua_state, 9 );
-    lua_setglobal( lua_state, "NK_WINDOW_BACKGROUND" );
-    lua_pushnumber( lua_state, 11 );
-    lua_setglobal( lua_state, "NK_WINDOW_SCALE_LEFT" );
-    lua_pushnumber( lua_state, 10 );
-    lua_setglobal( lua_state, "NK_WINDOW_NO_INPUT" );
-}
-
-void close_ui_module()
+void AmiffyUI::closeUIModule()
 {
     // Cleanup
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
-
-    Win32CleanupDeviceD3D();
-    ::DestroyWindow( hwnd );
-    ::UnregisterClassW( wc.lpszClassName, wc.hInstance );
 }
+
+void AmiffyUI::registerUIFrameUpdate( std::function<void( int, int )> const& handler )
+{
+    frameHandler = handler;
+}
+
+void AmiffyUI::registerKeyCallback( std::function<void( int, int, int, int )> const& handler )
+{
+    keyCallbackHandlers.push_back( handler );
+}
+}   // namespace Amiffy

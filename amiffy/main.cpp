@@ -1,43 +1,54 @@
 #include <iostream>
 
-#include "amiffyconf.h"
 #include "amiffy.h"
+#include "scripts.h"
 #include "ui.h"
+#include "uicomponents.h"
 
 extern "C" {
-#include "scripts.h"
 #include <log.h>
 }
 
 int main( int argc, char** argv )
 {
-    Amiffy::Amiffy amiffy;
+    Amiffy::Amiffy             amiffy;
+    Amiffy::AmiffyUI           amiffyUI( &amiffy );
+    Amiffy::AmiffyUIComponents amiffyUiComponents( &amiffyUI );
+    Amiffy::AmiffyScriptModule amiffyScriptModule( &amiffy );
 
     amiffy.openLogModule();
     log_info( "Amiffy Application is starting..............................." );
 
-    open_ui_module();
+    amiffyUI.registerUIFrameUpdate( [&amiffyScriptModule]( int width, int height ) {
+        amiffyScriptModule.tick( width, height );
+    } );
+
+    amiffyUI.createWindow();
+    amiffyUI.openUIModule();
 
     amiffy.openAudioModule();
 
-    open_script_module( AMIFFY_DEFAULT_WINDOW_WIDTH, AMIFFY_DEFAULT_WINDOW_HEIGHT );
+    amiffyScriptModule.openScriptModule();
 
-    install_script_module();
+    //        open_script_module( AMIFFY_DEFAULT_WINDOW_WIDTH, AMIFFY_DEFAULT_WINDOW_HEIGHT );
+    amiffyScriptModule.installScriptModule();
+    //    install_script_module();
 
-    install_ui_script_module();
+    amiffyUI.initUIEnv();
+    //    initUIEnv();
 
-    init_ui_env();
+    amiffyScriptModule.initScriptEnv();
+    //    init_script_env();
 
-    init_script_env();
+    //    register_ui_frame_update_handler( update_script_frame );
+    //    register_ui_window_key_callback( &amiffy );
 
-    register_ui_frame_update_handler( update_script_frame );
-    register_ui_window_key_callback( &amiffy );
+    amiffyUI.beginUIEventLoop();
 
-    begin_ui_event_loop();
+    amiffyUI.closeUIModule();
+    amiffyUI.desotryWindow();
 
-    close_ui_module();
-
-    close_script_module();
+    //    close_script_module();
 
     amiffy.closeAudioModule();
 

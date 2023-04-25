@@ -25,5 +25,5 @@
 // #define HIGHSPEED_EVENT_FLAG
 #define LOWSPEED_EVENT_FLAG
 
-extern lua_State* lua_state;
+//extern lua_State* lua_state;
 #endif   // AMIFFY_AMIFFYCONF_H_

@@ -1,19 +1,41 @@
 #ifndef AMIFFY_SCRIPT_H_
 #define AMIFFY_SCRIPT_H_
 
-#include <lua/lauxlib.h>
-#include <lua/lua.h>
+#include "amiffy.h"
 
-void open_script_module( double width, double height );
+namespace Amiffy {
 
-void install_script_module();
+class AmiffyScriptModule
+{
+public:
+    void openScriptModule();
+    void closeScriptModule();
+    void installScriptModule();
+    void reloadScriptModule();
+    void initScriptEnv();
+    void tick( int clientWidth, int clientHeight );
+    explicit AmiffyScriptModule( Amiffy* _amiffy );
+    ~AmiffyScriptModule();
 
-void init_script_env();
+private:
+    Amiffy* amiffy;
+    LuaVM vm;
+};
 
-void update_script_frame( double width, double height );
+}   // namespace Amiffy
+//
+// void open_script_module( double width, double height );
+//
+// void install_script_module();
+//
+// void init_script_env();
+//
+// void update_script_frame( double width, double height );
+//
+// void reload_script_module();
+//
+// void close_script_module();
 
-void reload_script_module();
 
-void close_script_module();
 
 #endif

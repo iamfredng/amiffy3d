@@ -6,8 +6,9 @@
 #include "imgui_internal.h"
 #include <imgui.h>
 
-extern "C" {
 #include "uicomponents.h"
+
+extern "C" {
 #include <log.h>
 #include <lua/lauxlib.h>
 #include <lua/lua.h>
@@ -240,17 +241,25 @@ void AmiffyUIComponents::useLightTheme()
 
 void useDarkThemem() {}
 
-int AmiffyUIComponents::luaopen_imgui( lua_State* L )
+void AmiffyUIComponents::installUIComponents()
 {
-    luaL_Reg log [] = { { "begin_window", amiffy_begin_window },
-                        { "end_window", amiffy_end_window },
-                        { "button", amiffy_button },
-                        { "text", amiffy_text },
-                        { NULL, NULL } };
-    luaL_newlib( L, log );
-
-    log_info( "初始化imgui模块" );
-
-    return 1;
+    //    luaL_Reg log [] = { { "begin_window", amiffy_begin_window },
+    //                        { "end_window", amiffy_end_window },
+    //                        { "button", amiffy_button },
+    //                        { "text", amiffy_text },
+    //                        { NULL, NULL } };
+    //    luaL_newlib( L, log );
+    //
+    //    log_info( "初始化imgui模块" );
+    //
+    //    return 1;
+}
+AmiffyUIComponents::~AmiffyUIComponents()
+{
+    ui = nullptr;
+}
+AmiffyUIComponents::AmiffyUIComponents( AmiffyUI* _ui )
+{
+    ui = _ui;
 }
 }   // namespace Amiffy

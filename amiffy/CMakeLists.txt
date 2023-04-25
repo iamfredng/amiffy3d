@@ -21,7 +21,7 @@ find_package(imgui CONFIG REQUIRED)
 set(AMIFFY_SOURCE
         amiffyconf.h main.cpp
         images.h images.c
-        scripts.h scripts.c
+        scripts.h scripts.cpp
         audio.h audio.cpp
         ui.h ui.cpp
         printstack.h printstack.c
@@ -30,7 +30,7 @@ set(AMIFFY_SOURCE
         uicomponents.h uicomponents.cpp
         amiffy.cpp amiffy.h)
 
-# add_executable(AMIFFY3D ${AMIFFY_SOURCE} ${ICON})
+#add_executable(AMIFFY3D ${AMIFFY_SOURCE} ${ICON})
 
 add_executable(AMIFFY3D WIN32 MACOSX_BUNDLE ${AMIFFY_SOURCE} ${ICON})
 

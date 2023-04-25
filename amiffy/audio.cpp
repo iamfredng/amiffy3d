@@ -1,23 +1,26 @@
 #include "audio.h"
 #include <irrKlang.h>
 
+namespace Amiffy {
 using namespace irrklang;
 
-static ISoundEngine* engine;
-
-void open_audio_module()
+void AmiffyAudio::openAudioModule()
 {
-    engine = createIrrKlangDevice();
-    if ( !engine ) return;   // error starting up the engine
+    soundEngine = createIrrKlangDevice();
 }
 
-void close_audio_module()
+void AmiffyAudio::closeAudioModule()
 {
-    engine->drop();
+    soundEngine->drop();
 }
 
-
-void play_audio( const char* fileName, bool loop )
+void AmiffyAudio::playAudio( std::string fileName, bool loop )
 {
-    engine->play2D( fileName, loop );
+    soundEngine->play2D( fileName.c_str(), loop );
 }
+
+void AmiffyAudio::installAudioModule()
+{
+
+}
+}   // namespace Amiffy

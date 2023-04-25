@@ -2,9 +2,9 @@
 // Created by iamfr on 2023/4/24.
 //
 #include "amiffy.h"
+#include "amiffyconf.h"
 
 extern "C" {
-#include "amiffyconf.h"
 #include <log.h>
 }
 
@@ -12,21 +12,24 @@ namespace Amiffy {
 
 void Amiffy::openAudioModule()
 {
-    engine = irrklang::createIrrKlangDevice();
-    if ( !engine ) return;   // error starting up the engine
+    if ( nullptr != audio)
+        audio->openAudioModule();
 }
 
 void Amiffy::closeAudioModule()
 {
-    engine->drop();
+    if ( nullptr != audio)
+        audio->closeAudioModule();
 }
 
 void Amiffy::playAudio( const char* fileName, bool loop )
 {
-    engine->play2D( fileName, loop );
+    if ( nullptr != audio) {
+        audio->playAudio( fileName, loop );
+    }
 }
 
-void Amiffy::globalKeyCallback(int key, int scancode, int action, int mods)
+void Amiffy::globalKeyCallback( int key, int scancode, int action, int mods )
 {
     // alt   = mod4
     // shift = mod1
@@ -35,7 +38,7 @@ void Amiffy::globalKeyCallback(int key, int scancode, int action, int mods)
     log_debug( "key: %d scancode: %d action: %d mods: %d", key, scancode, action, mods );
     if ( key == 294 && action == 0 ) {
         //        reload_lua = true;
-//        reload_script_module();
+        //        reload_script_module();
     }
     if ( key == 83 && action == 0 ) {
         playAudio( "./audio/explosion.wav", false );
@@ -61,4 +64,14 @@ void Amiffy::closeLogModule()
 }
 
 void Amiffy::run() {}
+
+Amiffy::Amiffy()
+{
+    audio = new AmiffyAudio();
+}
+
+Amiffy::~Amiffy()
+{
+    audio = nullptr;
+}
 }   // namespace Amiffy
