@@ -16,6 +16,7 @@ extern "C" {
 }
 
 namespace ImGui {
+
 inline ImVec2 Vec2MinVec2( ImVec2 v1, ImVec2 v2 )
 {
     return ImVec2( v1.x - v2.x, v1.y - v1.y );
@@ -131,9 +132,8 @@ static int amiffy_begin_window( lua_State* L )
     const char* str    = lua_tostring( L, 1 );
     bool        active = lua_toboolean( L, 2 );
 
-    bool rvl = ImGui::Begin( str, &active, 0 );
 
-    //    log_info( "%s", str );
+    bool rvl = ImGui::Begin( str, &active, 0 );
 
     lua_pushboolean( L, rvl );
     return 1;
@@ -164,6 +164,19 @@ static int amiffy_text( lua_State* L )
     const char* str = lua_tostring( L, 1 );
     ImGui::BulletText( str );
     return 0;
+}
+
+static int luaopen_imgui( lua_State* L )
+{
+    luaL_Reg components [] = { { "begin_window", amiffy_begin_window },
+                               { "end_window", amiffy_end_window },
+                               { "button", amiffy_button },
+                               { "text", amiffy_text },
+                               { NULL, NULL } };
+    luaL_newlib( L, components );
+
+    log_info( "初始化ImGui" );
+    return 1;
 }
 
 unsigned int Color( unsigned int c )
@@ -243,16 +256,14 @@ void useDarkThemem() {}
 
 void AmiffyUIComponents::installUIComponents()
 {
-    //    luaL_Reg log [] = { { "begin_window", amiffy_begin_window },
-    //                        { "end_window", amiffy_end_window },
-    //                        { "button", amiffy_button },
-    //                        { "text", amiffy_text },
-    //                        { NULL, NULL } };
-    //    luaL_newlib( L, log );
-    //
-    //    log_info( "初始化imgui模块" );
-    //
-    //    return 1;
+    lua_State* lua_state = (lua_State*) ui->amiffy->luaVm;
+
+    lua_getglobal( lua_state, "package" );
+    lua_getfield( lua_state, -1, "preload" );
+
+    lua_pushcfunction( lua_state, luaopen_imgui );
+    lua_setfield( lua_state, -2, "imgui" );
+    lua_pop( lua_state, 2 );
 }
 AmiffyUIComponents::~AmiffyUIComponents()
 {

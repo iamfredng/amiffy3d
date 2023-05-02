@@ -54,8 +54,10 @@ public:
     explicit AmiffyUI( Amiffy* _amiffy );
     virtual ~AmiffyUI();
 
-private:
+public:
     Amiffy*                                                amiffy = nullptr;
+
+private:
     bool                                                   runing;
     AmiffyUIData                                           uidata;
     float                                                  bgcolor [4]  = { 0, 0, 0, 0 };

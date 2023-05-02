@@ -2,6 +2,13 @@
   "name" : "amiffy3d",
   "dependencies" : [
     "imgui",
-    "directxtk"
+    {
+      "name":"directxtk",
+      "platform":"(windows & x64)"
+    },
+    {
+      "name":"poco",
+      "features":["netssl"]
+    }
   ]
 }

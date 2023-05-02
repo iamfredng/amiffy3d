@@ -143,6 +143,7 @@ void AmiffyScriptModule::tick( int clientWidth, int clientHeight )
     lua_setfield( lua_state, -2, "height" );
     lua_pop( lua_state, 1 );
 
+
     lua_getglobal( lua_state, "amiffy_update" );
 
     int rvl = docall( lua_state, 0, 0 );
@@ -187,4 +188,5 @@ AmiffyScriptModule::~AmiffyScriptModule()
 {
     amiffy = nullptr;
 }
+
 }   // namespace Amiffy

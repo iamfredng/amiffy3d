@@ -1,9 +1,8 @@
-#include <iostream>
-
 #include "amiffy.h"
 #include "scripts.h"
 #include "ui.h"
 #include "uicomponents.h"
+#include <iostream>
 
 extern "C" {
 #include <log.h>
@@ -13,7 +12,7 @@ int main( int argc, char** argv )
 {
     Amiffy::Amiffy             amiffy;
     Amiffy::AmiffyUI           amiffyUI( &amiffy );
-    Amiffy::AmiffyUIComponents amiffyUiComponents( &amiffyUI );
+    Amiffy::AmiffyUIComponents amiffyUIComponents( &amiffyUI );
     Amiffy::AmiffyScriptModule amiffyScriptModule( &amiffy );
 
     amiffy.openLogModule();
@@ -23,7 +22,14 @@ int main( int argc, char** argv )
         amiffyScriptModule.tick( width, height );
     } );
 
+    amiffyUI.registerKeyCallback( [&amiffyScriptModule]( int key, int s, int action, int mod ) {
+        if ( key == 116 && action == 0 ) {
+            amiffyScriptModule.reloadScriptModule();
+        }
+    } );
+
     amiffyUI.createWindow();
+
     amiffyUI.openUIModule();
 
     amiffy.openAudioModule();
@@ -37,8 +43,11 @@ int main( int argc, char** argv )
     amiffyUI.initUIEnv();
     //    initUIEnv();
 
+    amiffyUIComponents.installUIComponents();
+
     amiffyScriptModule.initScriptEnv();
     //    init_script_env();
+
 
     //    register_ui_frame_update_handler( update_script_frame );
     //    register_ui_window_key_callback( &amiffy );

@@ -17,6 +17,7 @@ endif ()
 
 find_package(DirectX11 REQUIRED)
 find_package(imgui CONFIG REQUIRED)
+find_package(Poco REQUIRED Net)
 
 set(AMIFFY_SOURCE
         amiffyconf.h main.cpp
@@ -36,6 +37,7 @@ add_executable(AMIFFY3D WIN32 MACOSX_BUNDLE ${AMIFFY_SOURCE} ${ICON})
 
 target_link_libraries(AMIFFY3D
         PRIVATE ${DirectX11_LIBRARY}
+        PRIVATE Poco::Net
         PRIVATE imgui::imgui)
 
 target_link_libraries(AMIFFY3D

@@ -44,7 +44,7 @@ void Amiffy::globalKeyCallback( int key, int scancode, int action, int mods )
         playAudio( "./audio/explosion.wav", false );
     }
     if ( key == 65 && action == 0 ) {
-        playAudio( "./audio/ophelia.mp3", false );
+        playAudio( "./audio/abc.mp3", false );
     }
 }
 

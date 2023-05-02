@@ -18,3 +18,6 @@ fonts/harmony.ttf 作为默认字体
   - fonts/
     - harmony.ttf
 ```
+
+cmake:
+ cmake -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=<vcpkg root>/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows -DCMAKE_CXX_FLAGS:STRING="-m64"

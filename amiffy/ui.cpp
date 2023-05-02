@@ -290,28 +290,28 @@ void AmiffyUI::beginUIEventLoop()
 
         //        ImGui::ShowDemoWindow();
 
-        bool isopen = true;
-        ImGui::Begin( "window", &isopen, 0 );
-        //        ImGui::SameLine();
-        //        ImGui::BeginGroup();
-
-        //        ImGui::SameLine();
-
-        ImGui::Button( "button 1" );
-        ImGui::SameLine();
-        ImGui::Button( "button 1" );
-        ImGui::SameLine();
-        ImGui::Button( "button 1" );
-        //        ImGui::SameLine();
-        ImGui::Button( "button 1" );
-        //        ImGui::SameLine();
-        ImGui::Button( "button 1" );
-        //        ImGui::SameLine();
-        ImGui::Button( "button 1" );
-
-        //        ImGui::EndGroup();
-
-        ImGui::End();
+//        bool isopen = true;
+//        ImGui::Begin( "window", &isopen, 0 );
+//        //        ImGui::SameLine();
+//        //        ImGui::BeginGroup();
+//
+//        //        ImGui::SameLine();
+//
+//        ImGui::Button( "button 1" );
+//        ImGui::SameLine();
+//        ImGui::Button( "button 1" );
+//        ImGui::SameLine();
+//        ImGui::Button( "button 1" );
+//        //        ImGui::SameLine();
+//        ImGui::Button( "button 1" );
+//        //        ImGui::SameLine();
+//        ImGui::Button( "button 1" );
+//        //        ImGui::SameLine();
+//        ImGui::Button( "button 1" );
+//
+//        //        ImGui::EndGroup();
+//
+//        ImGui::End();
 
         if ( nullptr != frameHandler ) {
             frameHandler( width, height );

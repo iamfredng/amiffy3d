@@ -24,12 +24,13 @@ endif ()
 cmake_dependent_option(USE_MSVC_RUNTIME_LIBRARY_DLL "Use MSVC runtime library DLL" ON
                        "MSVC" OFF)
 
-#set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+# set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(LIBRARY_BUILD_TYPE SHARED)
 
 add_subdirectory(3rd/logc)
 add_subdirectory(3rd/lua)
 add_subdirectory(3rd/nothings)
-#add_subdirectory(amiffy_ex)
+# add_subdirectory(amiffy_ex)
 add_subdirectory(amiffy)
